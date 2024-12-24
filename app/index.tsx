@@ -3,6 +3,7 @@ import { createStackNavigator, StackNavigationProp } from '@react-navigation/sta
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import SplashScreen from './screens/splashScreen'; // Import the SplashScreen component
 import LoginScreen from './screens/loginScreen'; // Import the proper LoginScreen component
+import ChatsScreen from './screens/chatsScreen';
 
 // Define the types for your stack navigator routes
 type RootStackParamList = {
@@ -10,12 +11,6 @@ type RootStackParamList = {
   Login: undefined;
   Main: undefined;
 };
-
-const ChatsScreen = () => (
-  <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-    <Text>Chats Screen</Text>
-  </View>
-);
 
 const StatusScreen = () => (
   <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
