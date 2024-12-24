@@ -1,30 +1,14 @@
 import { View, Text, Button } from 'react-native';
 import { createStackNavigator, StackNavigationProp } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { useNavigation } from '@react-navigation/native';
 import SplashScreen from './screens/splashScreen'; // Import the SplashScreen component
+import LoginScreen from './screens/loginScreen'; // Import the proper LoginScreen component
 
 // Define the types for your stack navigator routes
 type RootStackParamList = {
   Splash: undefined;
   Login: undefined;
   Main: undefined;
-};
-
-type LoginScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Login'>;
-
-const LoginScreen = () => {
-  const navigation = useNavigation<LoginScreenNavigationProp>();
-
-  return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-      <Text>Login Screen</Text>
-      <Button
-        title="Go to Main Page"
-        onPress={() => navigation.navigate('Main')}
-      />
-    </View>
-  );
 };
 
 const ChatsScreen = () => (
