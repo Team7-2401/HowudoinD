@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react';
 import { View, Text, Button } from 'react-native';
-import { createStackNavigator } from '@react-navigation/stack';
+import { createStackNavigator, StackNavigationProp } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useNavigation } from '@react-navigation/native';
-import { StackNavigationProp } from '@react-navigation/stack';
+import SplashScreen from './screens/splashScreen'; // Import the SplashScreen component
 
 // Define the types for your stack navigator routes
 type RootStackParamList = {
@@ -13,12 +12,6 @@ type RootStackParamList = {
 };
 
 type LoginScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Login'>;
-
-const SplashScreen = () => (
-  <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-    <Text>Splash Screen</Text>
-  </View>
-);
 
 const LoginScreen = () => {
   const navigation = useNavigation<LoginScreenNavigationProp>();
@@ -62,7 +55,7 @@ const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
 
 const MainTabNavigator = () => (
-  <Tab.Navigator>
+  <Tab.Navigator screenOptions={{ headerShown: false }}>
     <Tab.Screen name="Chats" component={ChatsScreen} />
     <Tab.Screen name="Status" component={StatusScreen} />
     <Tab.Screen name="Calls" component={CallsScreen} />
@@ -71,23 +64,14 @@ const MainTabNavigator = () => (
 );
 
 const App = () => {
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    setTimeout(() => {
-      setIsLoading(false);
-    }, 3000); // 3 seconds
-  }, []);
-
-  if (isLoading) {
-    return <SplashScreen />;
-  }
-
   return (
-    <Stack.Navigator>
-      <Stack.Screen name="Login" component={LoginScreen} />
-      <Stack.Screen name="Main" component={MainTabNavigator} />
-    </Stack.Navigator>
+    <View style={{ flex: 1 }}>
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="Splash" component={SplashScreen} />
+        <Stack.Screen name="Login" component={LoginScreen} />
+        <Stack.Screen name="Main" component={MainTabNavigator} />
+      </Stack.Navigator>
+    </View>
   );
 };
 
