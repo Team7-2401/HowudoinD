@@ -7,12 +7,16 @@ import LoginScreen from './screens/loginScreen'; // Import the proper LoginScree
 import FriendsScreen from './screens/friendsScreen';
 import ProfileScreen from './screens/profileScreen';
 import FriendsListScreen from './screens/friendslistScreen';
+import FriendMessagingScreen from './screens/friendsmessagingScreen';
 
 // Define the types for your stack navigator routes
 type RootStackParamList = {
   Splash: undefined;
   Login: undefined;
   Main: undefined;
+  FriendsList: undefined;
+  FriendsDetail: undefined;
+  friendsmessagingScreen: undefined
 };
 
 const GroupsScreen = () => (
@@ -66,6 +70,7 @@ const App = () => {
         <Stack.Screen name="Splash" component={SplashScreen} />
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Main" component={MainTabNavigator} />
+        <Stack.Screen name="friendsmessagingScreen" component={FriendMessagingScreen} />
       </Stack.Navigator>
     </View>
   );

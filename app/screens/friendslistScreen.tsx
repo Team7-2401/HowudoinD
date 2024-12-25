@@ -2,6 +2,11 @@ import React from 'react';
 import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+
+type NavigationProp = NativeStackNavigationProp<{
+  friendsmessagingScreen: { friendId: string; friendName: string };
+}>;
 
 interface Friend {
   id: string;
@@ -10,7 +15,7 @@ interface Friend {
 }
 
 const FriendsScreen: React.FC = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<NavigationProp>();
   const [friends, setFriends] = React.useState<Friend[]>([
     { id: '1', name: 'Carlos Ahmad', status: 'Send Request' },
     { id: '2', name: 'Ali Khan', status: 'Send Request' },
@@ -38,30 +43,45 @@ const FriendsScreen: React.FC = () => {
 
   const filteredFriends = React.useMemo(() => {
     return friends.filter((friend) =>
+      friend.status === 'Send Request' && 
       friend.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
   }, [friends, searchQuery]);
 
-  const handleProfilePress = (friend: Friend) => {
-    console.log(`Viewing profile of ${friend.name}`);
-  };
+  const requestsFriends = React.useMemo(() => {
+    return friends.filter((friend) => friend.status === 'Request Sent');
+  }, [friends]);
 
   const handleMessagePress = (friend: Friend) => {
-    console.log(`Messaging ${friend.name}`);
+    navigation.navigate('friendsmessagingScreen', {
+      friendId: friend.id,
+      friendName: friend.name
+    });
+  };
+
+  const handleAcceptRequest = (id: string) => {
+    setFriends((prevFriends) =>
+      prevFriends.map((friend) =>
+        friend.id === id
+          ? { ...friend, status: 'Friends' }
+          : friend
+      )
+    );
   };
 
   const renderFriendItem = ({ item }: { item: Friend }) => (
     <View style={styles.friendCard}>
       <Text style={styles.friendName}>{item.name}</Text>
       <View style={styles.buttonsContainer}>
-        <TouchableOpacity style={styles.profileButton} onPress={() => handleProfilePress(item)}>
-          <Text style={styles.profileButtonText}>Profile</Text>
+        <TouchableOpacity 
+          style={styles.messageButton}
+          onPress={() => navigation.navigate('friendsmessagingScreen', {
+            friendId: item.id,
+            friendName: item.name
+          })}
+        >
+          <Ionicons name="chatbox-outline" size={20} color="#3E87FE" />
         </TouchableOpacity>
-        {item.status === 'Send Request' && (
-          <TouchableOpacity style={styles.messageButton} onPress={() => handleMessagePress(item)}>
-            <Ionicons name="chatbox-outline" size={20} color="#3E87FE" />
-          </TouchableOpacity>
-        )}
       </View>
     </View>
   );
@@ -69,9 +89,12 @@ const FriendsScreen: React.FC = () => {
   const renderRequestItem = ({ item }: { item: Friend }) => (
     <View style={styles.requestCard}>
       <Text style={styles.friendName}>{item.name}</Text>
-      <View style={styles.requestSentIndicator}>
-        <Text style={styles.requestSentIndicatorText}>Request Sent</Text>
-      </View>
+      <TouchableOpacity
+        style={styles.acceptButton}
+        onPress={() => handleAcceptRequest(item.id)}
+      >
+        <Text style={styles.acceptButtonText}>Accept</Text>
+      </TouchableOpacity>
     </View>
   );
 
@@ -94,14 +117,14 @@ const FriendsScreen: React.FC = () => {
         onChangeText={setSearchQuery}
       />
       <FlatList
-        data={filteredFriends.filter((f) => f.status === 'Send Request')}
+        data={filteredFriends}
         renderItem={renderFriendItem}
         keyExtractor={(item) => item.id}
         style={styles.friendList}
       />
-      <Text style={styles.subHeader}>Requests Sent...</Text>
+      <Text style={styles.subHeader}>Requests Received...</Text>
       <FlatList
-        data={filteredFriends.filter((f) => f.status === 'Request Sent')}
+        data={requestsFriends}
         renderItem={renderRequestItem}
         keyExtractor={(item) => item.id}
         style={styles.requestList}
@@ -175,17 +198,6 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     flex: 1,
   },
-  profileButton: {
-    backgroundColor: '#3E87FE',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-  },
-  profileButtonText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
   messageButton: {
     backgroundColor: '#FFFFFF',
     padding: 8,
@@ -194,7 +206,7 @@ const styles = StyleSheet.create({
     borderColor: '#3E87FE',
   },
   requestList: {
-    marginBottom: 80, // Space for tab bar
+    marginBottom: 40, // Space for tab bar
     minHeight: 200, // Minimum height for 3 cards (approx)
     paddingBottom: 16,
   },
@@ -207,20 +219,35 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 12,
     marginVertical: 6, // Consistent spacing between cards
-    height: 56, // Fixed height for consistent card size
+    height: 50, // Fixed height for consistent card size
   },
-  requestSentIndicator: {
-    backgroundColor: '#9CA3AF',
+  requestReceivedIndicator: {
+    backgroundColor: '#000000',
     paddingVertical: 6,
     paddingHorizontal: 16,
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  requestSentIndicatorText: {
+  requestReceivedIndicatorText: {
     fontSize: 14,
     fontWeight: 'bold',
     color: '#FFFFFF',
+  },
+  acceptButton: {
+    backgroundColor: '#000000',
+    paddingVertical: 8,
+    paddingHorizontal: 24, // Increased horizontal padding
+    minWidth: 70, // Added minimum width
+    minHeight: 40, // Added minimum height
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  acceptButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: 'bold',
   },
 });
 
