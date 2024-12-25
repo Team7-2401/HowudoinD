@@ -23,6 +23,14 @@ const GroupsScreen = () => (
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
+const FriendsStack = createStackNavigator();
+
+const FriendsStackNavigator = () => (
+  <FriendsStack.Navigator screenOptions={{ headerShown: false }}>
+    <FriendsStack.Screen name="FriendsList" component={FriendsScreen} />
+    <FriendsStack.Screen name="FriendsDetail" component={FriendsListScreen} />
+  </FriendsStack.Navigator>
+);
 
 const MainTabNavigator = () => (
   <Tab.Navigator 
@@ -45,7 +53,7 @@ const MainTabNavigator = () => (
       tabBarInactiveTintColor: 'gray',
     })}
   >
-    <Tab.Screen name="Friends" component={FriendsScreen} />
+    <Tab.Screen name="Friends" component={FriendsStackNavigator} />
     <Tab.Screen name="Groups" component={GroupsScreen} />
     <Tab.Screen name="Profile" component={ProfileScreen} />
   </Tab.Navigator>
@@ -58,8 +66,6 @@ const App = () => {
         <Stack.Screen name="Splash" component={SplashScreen} />
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Main" component={MainTabNavigator} />
-        <Stack.Screen name="Friends" component={FriendsScreen} />
-        <Stack.Screen name="Friends List" component={FriendsListScreen} />
       </Stack.Navigator>
     </View>
   );

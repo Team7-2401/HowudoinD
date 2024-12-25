@@ -77,6 +77,10 @@ const FriendRequestScreen: React.FC<Props> = ({ navigation }) => {
     );
   };
 
+  const handleFriendSelect = () => {
+    navigation.navigate('FriendsDetail');
+  };
+
   return (
     <View style={styles.container}>
       <Text style={styles.header}>Howudoin</Text>
@@ -102,7 +106,7 @@ const FriendRequestScreen: React.FC<Props> = ({ navigation }) => {
       />
       <TouchableOpacity 
         style={styles.bigBlueButton} 
-        onPress={() => navigation.navigate('Friends List')}
+        onPress={handleFriendSelect}
       >
         <Text style={styles.bigButtonText}>Check your friends list</Text>
         <View style={styles.arrowContainer}>
