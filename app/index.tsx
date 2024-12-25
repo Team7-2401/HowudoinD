@@ -6,6 +6,7 @@ import SplashScreen from './screens/splashScreen'; // Import the SplashScreen co
 import LoginScreen from './screens/loginScreen'; // Import the proper LoginScreen component
 import FriendsScreen from './screens/friendsScreen';
 import ProfileScreen from './screens/profileScreen';
+import FriendsListScreen from './screens/friendslistScreen';
 
 // Define the types for your stack navigator routes
 type RootStackParamList = {
@@ -57,6 +58,8 @@ const App = () => {
         <Stack.Screen name="Splash" component={SplashScreen} />
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Main" component={MainTabNavigator} />
+        <Stack.Screen name="Friends" component={FriendsScreen} />
+        <Stack.Screen name="Friends List" component={FriendsListScreen} />
       </Stack.Navigator>
     </View>
   );
