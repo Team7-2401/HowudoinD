@@ -1,33 +1,35 @@
 import React from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableOpacity } from 'react-native';
-import { Ionicons } from '@expo/vector-icons'; // For bottom navigation icons
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { setAuthToken } from '../config/tokenStorage';
 
 const ProfileScreen = () => {
+  const navigation = useNavigation();
+
+  const handleLogout = () => {
+    setAuthToken(null); // Reset token
+    navigation.navigate('Login');
+  };
+
   return (
     <View style={styles.container}>
       {/* Header */}
       <Text style={styles.header}>Howudoin</Text>
       <View style={styles.divider} />
 
-      {/* Profile Title */}
-      <Text style={styles.profileTitle}>Profile</Text>
-
-      {/* Input Fields */}
-      <View style={styles.inputContainer}>
-        <Text style={styles.label}>Name</Text>
-        <TextInput style={styles.input} placeholder="Ahmad" />
-
-        <Text style={styles.label}>Last Name</Text>
-        <TextInput style={styles.input} placeholder="Carlos Ahmad" />
-
-        <Text style={styles.label}>About Me</Text>
-        <TextInput
-          style={[styles.input, styles.textArea]}
-          placeholder="Hello, my name is..."
-          multiline
-          numberOfLines={4}
-        />
+      {/* Profile Content */}
+      <View style={styles.profileContent}>
+        <Text style={styles.title}>Profile</Text>
+        <Text style={styles.privacyMessage}>
+          At Howudoin, we take your privacy seriously. As part of our commitment to data protection, 
+          we do not display personal information. Your data remains secure and private.
+        </Text>
       </View>
+
+      {/* Logout Button */}
+      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+        <Text style={styles.logoutText}>Logout</Text>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -38,12 +40,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
     paddingHorizontal: 20,
     paddingTop: 50,
+    justifyContent: 'center', // Add vertical centering
   },
   header: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#0078FF',
     textAlign: 'left',
+    marginBottom: 20, // Add spacing
   },
   divider: {
     height: 1,
@@ -58,6 +62,7 @@ const styles = StyleSheet.create({
   },
   inputContainer: {
     flex: 1,
+    marginTop: 20, // Add spacing between title and inputs
   },
   label: {
     fontSize: 16,
@@ -85,6 +90,39 @@ const styles = StyleSheet.create({
     borderColor: '#0078FF',
     paddingVertical: 10,
   },
+  profileContent: {
+    marginVertical: 20,
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 10,
+  },
+  info: {
+    fontSize: 16,
+    marginBottom: 5,
+  },
+  logoutButton: {
+    backgroundColor: '#0078FF',
+    padding: 10,
+    borderRadius: 5,
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  logoutText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  privacyMessage: {
+    fontSize: 16,
+    lineHeight: 24,
+    color: '#666',
+    textAlign: 'center',
+    paddingHorizontal: 20,
+    marginTop: 20,
+  }
 });
 
 export default ProfileScreen;
