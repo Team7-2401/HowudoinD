@@ -1,14 +1,20 @@
-// File path: screens/FriendRequestScreen.tsx
+// File: FriendRequestScreen.tsx
 
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  FlatList,
-  TouchableOpacity,
-  StyleSheet,
-} from 'react-native';
+import React from 'react';
+import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet } from 'react-native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import { Svg, Path } from 'react-native-svg';
+
+type RootStackParamList = {
+  'Friends List': undefined;
+};
+
+type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
+
+interface Props {
+  navigation: NavigationProp;
+}
 
 interface Friend {
   id: string;
@@ -16,64 +22,102 @@ interface Friend {
   status: 'Send Request' | 'Request Sent' | 'Friends';
 }
 
-const FriendRequestScreen: React.FC = () => {
-  const [searchText, setSearchText] = useState('');
-  const [friends, setFriends] = useState<Friend[]>([
+const FriendRequestScreen: React.FC<Props> = ({ navigation }) => {
+  const [friends, setFriends] = React.useState<Friend[]>([
     { id: '1', name: 'Carlos Ahmad', status: 'Send Request' },
     { id: '2', name: 'Carlos Ahmad', status: 'Send Request' },
     { id: '3', name: 'Carlos Ahmad', status: 'Request Sent' },
     { id: '4', name: 'Carlos Ahmad', status: 'Friends' },
+    { id: '5', name: 'Ali Ahmad', status: 'Friends' }
   ]);
+  const [searchQuery, setSearchQuery] = React.useState<string>('');
 
-  const handleRequest = (id: string) => {
-    setFriends((prev) =>
-      prev.map((friend) =>
+  const filteredFriends = React.useMemo(() => {
+    return friends.filter((friend) =>
+      friend.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [friends, searchQuery]);
+
+  const handleButtonPress = (id: string, currentStatus: string) => {
+    setFriends((prevFriends) =>
+      prevFriends.map((friend) =>
         friend.id === id
-          ? {
-              ...friend,
-              status: friend.status === 'Send Request' ? 'Request Sent' : friend.status,
-            }
+          ? { ...friend, status: currentStatus === 'Send Request' ? 'Request Sent' : currentStatus }
           : friend
       )
     );
   };
 
-  const renderFriend = ({ item }: { item: Friend }) => (
-    <View style={styles.friendCard}>
-      <Text style={styles.friendName}>{item.name}</Text>
-      <TouchableOpacity
-        style={[
-          styles.actionButton,
-          item.status === 'Friends' && styles.friendsButton,
-          item.status === 'Request Sent' && styles.sentButton,
-        ]}
-        onPress={() => handleRequest(item.id)}
-        disabled={item.status !== 'Send Request'}
-      >
-        <Text style={styles.actionText}>{item.status}</Text>
-      </TouchableOpacity>
-    </View>
-  );
+  const renderFriendItem = ({ item }: { item: Friend }) => {
+    return (
+      <View style={styles.friendCard}>
+        <Text style={styles.friendName}>{item.name}</Text>
+        <TouchableOpacity
+          style={[
+            styles.actionButton,
+            item.status === 'Send Request' && styles.sendRequest,
+            item.status === 'Request Sent' && styles.requestSent,
+            item.status === 'Friends' && styles.friends,
+          ]}
+          disabled={item.status !== 'Send Request'}
+          onPress={() => handleButtonPress(item.id, item.status)}
+        >
+          <Text
+            style={[
+              styles.actionText,
+              item.status === 'Send Request' && styles.sendRequestText,
+              item.status === 'Request Sent' && styles.requestSentText,
+              item.status === 'Friends' && styles.friendsText,
+            ]}
+          >
+            {item.status}
+          </Text>
+        </TouchableOpacity>
+      </View>
+    );
+  };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Add your friends...</Text>
-      <TextInput
-        style={styles.searchBar}
-        placeholder="Search by name or email"
-        value={searchText}
-        onChangeText={setSearchText}
-      />
-      <FlatList
-        data={friends}
-        keyExtractor={(item) => item.id}
-        renderItem={renderFriend}
-        contentContainerStyle={styles.friendList}
-      />
-      <View style={styles.stats}>
-        <Text style={styles.statsText}>Friends: 17</Text>
-        <Text style={styles.statsText}>Requests Sent: 22</Text>
+      <Text style={styles.header}>Howudoin</Text>
+      <View style={styles.headerLine} />
+      <Text style={styles.subHeader}>Add your friends...</Text>
+      <View style={styles.searchBox}>
+        <Ionicons name="search" size={20} style={styles.searchIcon} />
+        <TextInput 
+          style={styles.searchInput} 
+          placeholder="Search by name or email" 
+          placeholderTextColor="#9CA3AF"
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          autoCapitalize="none"
+          autoCorrect={false}
+        />
       </View>
+      <FlatList
+        data={filteredFriends}
+        renderItem={renderFriendItem}
+        keyExtractor={(item) => item.id}
+        style={styles.friendList}
+      />
+      <TouchableOpacity 
+        style={styles.bigBlueButton} 
+        onPress={() => navigation.navigate('Friends List')}
+      >
+        <Text style={styles.bigButtonText}>Check your friends list</Text>
+        <View style={styles.arrowContainer}>
+          <Svg height="40" width="40" viewBox="0 0 24 24" style={styles.arrowSvg}>
+            <Path
+              d="M10 19l7-7-7-7"
+              fill="none"
+              stroke="#FFFFFF"
+              strokeWidth="5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </Svg>
+        </View>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -81,64 +125,113 @@ const FriendRequestScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
-    padding: 16,
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 16,
   },
-  title: {
+  header: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#3E87FE',
+    marginVertical: 16, // Fixed by adding numeric value
+  },
+  subHeader: {
     fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 10,
+    color: '#000000',
+    marginVertical: 3,
   },
-  searchBar: {
-    height: 40,
-    borderColor: '#ccc',
+  searchBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
     borderWidth: 1,
+    borderColor: '#000000',
     borderRadius: 8,
-    paddingHorizontal: 10,
-    marginBottom: 20,
+    padding: 8,
+    marginVertical: 8,
+  },
+  searchIcon: {
+    marginRight: 8,
+    color: '#000000',
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    color: '#000000',
   },
   friendList: {
-    paddingBottom: 20,
+    flex: 1,
+    marginVertical: 8,
   },
   friendCard: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 10,
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: '#3E87FE',
     borderRadius: 8,
-    marginBottom: 10,
+    padding: 12,
+    marginVertical: 4,
   },
   friendName: {
     fontSize: 16,
+    fontWeight: 'bold',
+    color: '#000000',
   },
   actionButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
     borderRadius: 8,
-    backgroundColor: '#007bff',
   },
   actionText: {
-    color: '#fff',
-    fontSize: 14,
-  },
-  friendsButton: {
-    backgroundColor: '#000',
-  },
-  sentButton: {
-    backgroundColor: '#ccc',
-  },
-  stats: {
-    marginTop: 20,
-    padding: 10,
-    backgroundColor: '#e6f0ff',
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  statsText: {
     fontSize: 14,
     fontWeight: 'bold',
+  },
+  sendRequest: {
+    backgroundColor: '#3E87FE',
+  },
+  requestSent: {
+    backgroundColor: '#9CA3AF',
+  },
+  friends: {
+    backgroundColor: '#000000',
+  },
+  sendRequestText: {
+    color: '#FFFFFF',
+  },
+  requestSentText: {
+    color: '#FFFFFF',
+  },
+  friendsText: {
+    color: '#FFFFFF',
+  },
+  bigBlueButton: {
+    backgroundColor: '#3E87FE',
+    borderRadius: 15,
+    paddingVertical: 80,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginVertical: 16,
+    position: 'relative',
+  },
+  arrowContainer: {
+    position: 'absolute',
+    bottom: 16,
+    right: 16,
+  },
+  arrowSvg: {
+    width: 24,
+    height: 24,
+  },
+  bigButtonText: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+  },
+  headerLine: {
+    height: 1,
+    backgroundColor: '#3E87FE',
+    marginTop: 4,
+    marginBottom: 16,
   },
 });
 
