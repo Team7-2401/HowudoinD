@@ -8,6 +8,10 @@ import FriendsScreen from './screens/friendsScreen';
 import ProfileScreen from './screens/profileScreen';
 import FriendsListScreen from './screens/friendslistScreen';
 import FriendMessagingScreen from './screens/friendsmessagingScreen';
+import GroupsScreen from './screens/groupsScreen';
+import GroupDetailScreen from './screens/groupdetailScreen';
+import GroupCreationScreen from './screens/groupcreationScreen'; // Import the GroupCreationScreen component
+import GroupMessagingScreen from './screens/groupmessagingScreen'; // Import the GroupMessagingScreen component
 
 // Define the types for your stack navigator routes
 type RootStackParamList = {
@@ -19,21 +23,27 @@ type RootStackParamList = {
   friendsmessagingScreen: undefined
 };
 
-const GroupsScreen = () => (
-  <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-    <Text>Groups Screen</Text>
-  </View>
-);
+
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
 const FriendsStack = createStackNavigator();
+const GroupsStack = createStackNavigator();
+
 
 const FriendsStackNavigator = () => (
   <FriendsStack.Navigator screenOptions={{ headerShown: false }}>
     <FriendsStack.Screen name="FriendsList" component={FriendsScreen} />
     <FriendsStack.Screen name="FriendsDetail" component={FriendsListScreen} />
   </FriendsStack.Navigator>
+);
+
+const GroupsStackNavigator = () => (
+  <GroupsStack.Navigator screenOptions={{ headerShown: false }}>
+    <GroupsStack.Screen name="GroupsList" component={GroupsScreen} />
+    <GroupsStack.Screen name="groupdetailScreen" component={GroupDetailScreen} />
+    <GroupsStack.Screen name="groupcreationScreen" component={GroupCreationScreen} />
+  </GroupsStack.Navigator>
 );
 
 const MainTabNavigator = () => (
@@ -58,7 +68,7 @@ const MainTabNavigator = () => (
     })}
   >
     <Tab.Screen name="Friends" component={FriendsStackNavigator} />
-    <Tab.Screen name="Groups" component={GroupsScreen} />
+    <Tab.Screen name="Groups" component={GroupsStackNavigator} />
     <Tab.Screen name="Profile" component={ProfileScreen} />
   </Tab.Navigator>
 );
@@ -71,6 +81,7 @@ const App = () => {
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Main" component={MainTabNavigator} />
         <Stack.Screen name="friendsmessagingScreen" component={FriendMessagingScreen} />
+        <Stack.Screen name="groupmessagingScreen" component={GroupMessagingScreen} />
       </Stack.Navigator>
     </View>
   );
