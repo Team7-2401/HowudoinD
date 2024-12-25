@@ -3,7 +3,7 @@ import { createStackNavigator, StackNavigationProp } from '@react-navigation/sta
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import SplashScreen from './screens/splashScreen'; // Import the SplashScreen component
 import LoginScreen from './screens/loginScreen'; // Import the proper LoginScreen component
-import ChatsScreen from './screens/chatsScreen';
+import FriendsScreen from './screens/friendsScreen';
 
 // Define the types for your stack navigator routes
 type RootStackParamList = {
@@ -18,11 +18,6 @@ const StatusScreen = () => (
   </View>
 );
 
-const CallsScreen = () => (
-  <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-    <Text>Calls Screen</Text>
-  </View>
-);
 
 const ProfileScreen = () => (
   <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
@@ -35,9 +30,8 @@ const Stack = createStackNavigator();
 
 const MainTabNavigator = () => (
   <Tab.Navigator screenOptions={{ headerShown: false }}>
-    <Tab.Screen name="Chats" component={ChatsScreen} />
+    <Tab.Screen name="Friends" component={FriendsScreen} />
     <Tab.Screen name="Status" component={StatusScreen} />
-    <Tab.Screen name="Calls" component={CallsScreen} />
     <Tab.Screen name="Profile" component={ProfileScreen} />
   </Tab.Navigator>
 );
