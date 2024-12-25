@@ -12,9 +12,9 @@ type RootStackParamList = {
   Main: undefined;
 };
 
-const StatusScreen = () => (
+const GroupsScreen = () => (
   <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-    <Text>Status Screen</Text>
+    <Text>Groups Screen</Text>
   </View>
 );
 
@@ -31,7 +31,7 @@ const Stack = createStackNavigator();
 const MainTabNavigator = () => (
   <Tab.Navigator screenOptions={{ headerShown: false }}>
     <Tab.Screen name="Friends" component={FriendsScreen} />
-    <Tab.Screen name="Status" component={StatusScreen} />
+    <Tab.Screen name="Groups" component={GroupsScreen} />
     <Tab.Screen name="Profile" component={ProfileScreen} />
   </Tab.Navigator>
 );
