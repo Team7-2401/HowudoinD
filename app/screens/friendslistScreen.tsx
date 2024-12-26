@@ -3,6 +3,8 @@ import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet } from 'r
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { getAuthToken } from '../config/tokenStorage';
+import { SERVER_URL } from '../config/constants';
 
 type NavigationProp = NativeStackNavigationProp<{
   friendsmessagingScreen: { friendId: string; friendName: string };
@@ -10,41 +12,79 @@ type NavigationProp = NativeStackNavigationProp<{
 
 interface Friend {
   id: string;
-  name: string;
+  email: string;
   status: 'Send Request' | 'Request Sent' | 'Friends';
 }
 
+const removeDuplicateFriends = (friends: Friend[]): Friend[] => {
+  const uniqueEmails = new Set();
+  return friends.filter(friend => {
+    const isDuplicate = uniqueEmails.has(friend.email);
+    uniqueEmails.add(friend.email);
+    return !isDuplicate;
+  });
+};
+
 const FriendsScreen: React.FC = () => {
+  const [friends, setFriends] = React.useState<Friend[]>([]);
+  const [isLoading, setIsLoading] = React.useState(true);
+  const [currentId, setCurrentId] = React.useState(1);
   const navigation = useNavigation<NavigationProp>();
-  const [friends, setFriends] = React.useState<Friend[]>([
-    { id: '1', name: 'Carlos Ahmad', status: 'Send Request' },
-    { id: '2', name: 'Ali Khan', status: 'Send Request' },
-    { id: '3', name: 'John Doe', status: 'Send Request' },
-    { id: '4', name: 'Jane Smith', status: 'Send Request' },
-    { id: '5', name: 'Maria Garcia', status: 'Request Sent' },
-    { id: '6', name: 'Ahmed Ali', status: 'Request Sent' },
-    { id: '7', name: 'Emily Davis', status: 'Request Sent' },
-    { id: '8', name: 'Chris Brown', status: 'Friends' },
-    { id: '9', name: 'Anna Johnson', status: 'Friends' },
-    { id: '10', name: 'Michael Jordan', status: 'Friends' },
-    { id: '11', name: 'Emma Watson', status: 'Send Request' },
-    { id: '12', name: 'David Beckham', status: 'Request Sent' },
-    { id: '13', name: 'Sophia Loren', status: 'Friends' },
-    { id: '14', name: 'James Bond', status: 'Send Request' },
-    { id: '15', name: 'Tony Stark', status: 'Request Sent' },
-    { id: '16', name: 'Bruce Wayne', status: 'Friends' },
-    { id: '17', name: 'Clark Kent', status: 'Send Request' },
-    { id: '18', name: 'Diana Prince', status: 'Friends' },
-    { id: '19', name: 'Steve Rogers', status: 'Request Sent' },
-    { id: '20', name: 'Natasha Romanoff', status: 'Send Request' },
-  ]);
+
+  const fetchFriends = async () => {
+    try {
+      const token = await getAuthToken();
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      const response = await fetch(`${SERVER_URL}/friends`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch friends');
+      }
+
+      const result = await response.json();
+      console.log('API Response:', result);
+
+      if (!result || result.length === 0) {
+        setFriends([]);
+        return;
+      }
+
+      let tempId = currentId;
+      const transformedFriends = result.map((friend: any) => ({
+        id: (tempId++).toString(),
+        email: friend.email || 'No email',
+        status: friend.status || 'Send Request',
+      }));
+
+      const uniqueFriends = removeDuplicateFriends(transformedFriends);
+      setCurrentId(tempId);
+      setFriends(uniqueFriends);
+    } catch (error) {
+      console.error('Error fetching friends:', error);
+      setFriends([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  React.useEffect(() => {
+    fetchFriends();
+  }, []);
 
   const [searchQuery, setSearchQuery] = React.useState<string>('');
 
   const filteredFriends = React.useMemo(() => {
     return friends.filter((friend) =>
-      friend.status === 'Send Request' && 
-      friend.name.toLowerCase().includes(searchQuery.toLowerCase())
+      friend.email.toLowerCase().includes(searchQuery.toLowerCase())
     );
   }, [friends, searchQuery]);
 
@@ -55,7 +95,7 @@ const FriendsScreen: React.FC = () => {
   const handleMessagePress = (friend: Friend) => {
     navigation.navigate('friendsmessagingScreen', {
       friendId: friend.id,
-      friendName: friend.name
+      friendName: friend.email
     });
   };
 
@@ -71,14 +111,13 @@ const FriendsScreen: React.FC = () => {
 
   const renderFriendItem = ({ item }: { item: Friend }) => (
     <View style={styles.friendCard}>
-      <Text style={styles.friendName}>{item.name}</Text>
+      <View style={styles.textContainer}>
+        <Text style={styles.friendEmail}>{item.email}</Text>
+      </View>
       <View style={styles.buttonsContainer}>
         <TouchableOpacity 
           style={styles.messageButton}
-          onPress={() => navigation.navigate('friendsmessagingScreen', {
-            friendId: item.id,
-            friendName: item.name
-          })}
+          onPress={() => handleMessagePress(item)}
         >
           <Ionicons name="chatbox-outline" size={20} color="#3E87FE" />
         </TouchableOpacity>
@@ -88,7 +127,7 @@ const FriendsScreen: React.FC = () => {
 
   const renderRequestItem = ({ item }: { item: Friend }) => (
     <View style={styles.requestCard}>
-      <Text style={styles.friendName}>{item.name}</Text>
+      <Text style={styles.friendName}>{`${item.firstName} ${item.lastName}`}</Text>
       <TouchableOpacity
         style={styles.acceptButton}
         onPress={() => handleAcceptRequest(item.id)}
@@ -122,13 +161,14 @@ const FriendsScreen: React.FC = () => {
         keyExtractor={(item) => item.id}
         style={styles.friendList}
       />
-      <Text style={styles.subHeader}>Requests Received...</Text>
+      {/* <Text style={styles.subHeader}>Requests Received...</Text>
       <FlatList
         data={requestsFriends}
         renderItem={renderRequestItem}
         keyExtractor={(item) => item.id}
         style={styles.requestList}
-      />
+        We can't have this because of the way the backend is designed
+      /> */}
     </View>
   );
 };
@@ -188,15 +228,19 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 8,
   },
+  textContainer: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  friendEmail: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#000000',
+  },
   buttonsContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-  },
-  friendName: {
-    fontSize: 16,
-    fontWeight: '500',
-    flex: 1,
   },
   messageButton: {
     backgroundColor: '#FFFFFF',
