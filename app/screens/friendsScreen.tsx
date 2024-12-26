@@ -1,10 +1,13 @@
 // File: FriendRequestScreen.tsx
 
 import React from 'react';
-import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, Alert } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { Svg, Path } from 'react-native-svg';
+import { getAuthToken } from '../config/tokenStorage';
+import { SERVER_URL } from '../config/constants';
+import { get } from 'react-native/Libraries/TurboModule/TurboModuleRegistry';
 
 type RootStackParamList = {
   'Friends List': undefined;
@@ -23,14 +26,10 @@ interface Friend {
 }
 
 const FriendRequestScreen: React.FC<Props> = ({ navigation }) => {
-  const [friends, setFriends] = React.useState<Friend[]>([
-    { id: '1', name: 'Carlos Ahmad', status: 'Send Request' },
-    { id: '2', name: 'Carlos Ahmad', status: 'Send Request' },
-    { id: '3', name: 'Carlos Ahmad', status: 'Request Sent' },
-    { id: '4', name: 'Carlos Ahmad', status: 'Friends' },
-    { id: '5', name: 'Ali Ahmad', status: 'Friends' }
-  ]);
+  const [friends, setFriends] = React.useState<Friend[]>([]);
   const [searchQuery, setSearchQuery] = React.useState<string>('');
+  const [email, setEmail] = React.useState<string>('');
+  const [isLoading, setIsLoading] = React.useState(false);
 
   const filteredFriends = React.useMemo(() => {
     return friends.filter((friend) =>
@@ -46,6 +45,53 @@ const FriendRequestScreen: React.FC<Props> = ({ navigation }) => {
           : friend
       )
     );
+  };
+
+  const handleSendFriendRequest = () => {
+    if (!email) {
+      Alert.alert('Error', 'Please enter an email address');
+      return;
+    }
+
+    const token = getAuthToken();
+    console.log('Token:', token);
+
+    setIsLoading(true);
+    const requestParams = {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ email })
+    };
+
+    console.log('Sending friend request:', requestParams);
+
+    fetch(`${SERVER_URL}/friends/add`, requestParams)
+      .then(async response => {
+        const responseText = await response.text();
+        if (response.status !== 200) {
+          throw new Error(responseText);
+        }
+        console.log('Response:', responseText);
+        
+        if (responseText !== 'Friend request sent') {
+          throw new Error(responseText);
+        }
+        
+        return responseText;
+      })
+      .then(result => {
+        Alert.alert('Success', 'Friend request sent successfully');
+        setEmail('');
+      })
+      .catch(error => {
+        Alert.alert('Error', error.message);
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
   };
 
   const renderFriendItem = ({ item }: { item: Friend }) => {
@@ -86,18 +132,30 @@ const FriendRequestScreen: React.FC<Props> = ({ navigation }) => {
       <Text style={styles.header}>Howudoin</Text>
       <View style={styles.headerLine} />
       <Text style={styles.subHeader}>Add your friends...</Text>
-      <View style={styles.searchBox}>
-        <Ionicons name="search" size={20} style={styles.searchIcon} />
-        <TextInput 
-          style={styles.searchInput} 
-          placeholder="Search by name or email" 
-          placeholderTextColor="#9CA3AF"
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          autoCapitalize="none"
-          autoCorrect={false}
-        />
+      
+      {/* Search section */}
+      <View style={styles.searchSection}>
+        <View style={styles.searchBox}>
+          <Ionicons name="search" size={20} style={styles.searchIcon} />
+          <TextInput 
+            style={styles.searchInput} 
+            placeholder="Search by email" 
+            placeholderTextColor="#9CA3AF"
+            value={email}
+            onChangeText={setEmail}
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+        </View>
+        <TouchableOpacity 
+          style={styles.sendRequestButton}
+          onPress={handleSendFriendRequest}
+        >
+          <Text style={styles.sendRequestButtonText}>Send Friend Request</Text>
+        </TouchableOpacity>
       </View>
+
+      {/* Rest of your existing code */}
       <FlatList
         data={filteredFriends}
         renderItem={renderFriendItem}
@@ -144,23 +202,44 @@ const styles = StyleSheet.create({
     color: '#000000',
     marginVertical: 3,
   },
+  searchSection: {
+    alignItems: 'center',
+    marginVertical: 20,
+    width: '100%',
+  },
   searchBox: {
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#000000',
+    borderColor: '#3E87FE',
     borderRadius: 8,
     padding: 8,
-    marginVertical: 8,
+    width: '90%',
+    marginBottom: 10,
   },
   searchIcon: {
     marginRight: 8,
-    color: '#000000',
+    color: '#3E87FE',
   },
   searchInput: {
     flex: 1,
     fontSize: 16,
     color: '#000000',
+    padding: 8,
+  },
+  sendRequestButton: {
+    backgroundColor: '#3E87FE',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    width: '90%',
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  sendRequestButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   friendList: {
     flex: 1,
