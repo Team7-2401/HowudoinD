@@ -41,7 +41,7 @@ const LoginScreen = () => {
       const responseText = await response.text();
       console.log('Response:', responseText);
       
-      if (responseText === 'failed to validate user' || responseText === null) {
+      if (responseText === 'failed to validate user' || responseText === null || responseText === '') {
         throw new Error('Invalid credentials');
       }
       
