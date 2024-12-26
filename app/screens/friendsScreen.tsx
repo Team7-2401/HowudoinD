@@ -1,6 +1,6 @@
 // File: FriendRequestScreen.tsx
 
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, Alert } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -30,6 +30,8 @@ const FriendRequestScreen: React.FC<Props> = ({ navigation }) => {
   const [searchQuery, setSearchQuery] = React.useState<string>('');
   const [email, setEmail] = React.useState<string>('');
   const [isLoading, setIsLoading] = React.useState(false);
+  const [searchEmail, setSearchEmail] = useState('');
+  const [acceptEmail, setAcceptEmail] = useState('');
 
   const filteredFriends = React.useMemo(() => {
     return friends.filter((friend) =>
@@ -47,11 +49,7 @@ const FriendRequestScreen: React.FC<Props> = ({ navigation }) => {
     );
   };
 
-  const handleSendFriendRequest = () => {
-    if (!email) {
-      Alert.alert('Error', 'Please enter an email address');
-      return;
-    }
+  const handleSendFriendRequest = (email) => {
 
     const token = getAuthToken();
     console.log('Token:', token);
@@ -92,6 +90,39 @@ const FriendRequestScreen: React.FC<Props> = ({ navigation }) => {
       .finally(() => {
         setIsLoading(false);
       });
+  };
+
+  const handleAcceptFriendRequest = async (email: string) => {
+    try {
+      const token = await getAuthToken();
+      const response = await fetch(`${SERVER_URL}/friends/accept`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ "email": email })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to accept friend request');
+      }
+
+      // Check content type
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.indexOf("application/json") !== -1) {
+        const data = await response.json();
+        Alert.alert('Success', 'Friend request accepted!');
+      } else {
+        const text = await response.text();
+        console.log('Response text:', text);
+        Alert.alert('Success', 'Friend request accepted!');
+      }
+    
+    } catch (error) {
+      console.error('Error accepting friend request:', error);
+      Alert.alert('Error', 'Failed to accept friend request');
+    }
   };
 
   const renderFriendItem = ({ item }: { item: Friend }) => {
@@ -141,17 +172,41 @@ const FriendRequestScreen: React.FC<Props> = ({ navigation }) => {
             style={styles.searchInput} 
             placeholder="Search by email" 
             placeholderTextColor="#9CA3AF"
-            value={email}
-            onChangeText={setEmail}
+            value={searchEmail}
+            onChangeText={setSearchEmail}
             autoCapitalize="none"
             autoCorrect={false}
           />
         </View>
         <TouchableOpacity 
           style={styles.sendRequestButton}
-          onPress={handleSendFriendRequest}
+          onPress={() => handleSendFriendRequest(searchEmail)}
         >
           <Text style={styles.sendRequestButtonText}>Send Friend Request</Text>
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.spacer} />
+
+      {/* Accept Request section */}
+      <View style={styles.searchSection}>
+        <View style={styles.searchBox}>
+          <Ionicons name="person-add" size={20} style={styles.searchIcon} />
+          <TextInput 
+            style={styles.searchInput} 
+            placeholder="Accept friend request by email" 
+            placeholderTextColor="#9CA3AF"
+            value={acceptEmail}
+            onChangeText={setAcceptEmail}
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+        </View>
+        <TouchableOpacity 
+          style={styles.sendRequestButton}
+          onPress={() => handleAcceptFriendRequest(acceptEmail)}
+        >
+          <Text style={styles.sendRequestButtonText}>Accept Friend Request</Text>
         </TouchableOpacity>
       </View>
 
@@ -315,6 +370,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#3E87FE',
     marginTop: 4,
     marginBottom: 16,
+  },
+  spacer: {
+    height: 60,
   },
 });
 
