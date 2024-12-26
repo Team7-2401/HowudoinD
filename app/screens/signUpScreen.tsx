@@ -32,7 +32,7 @@ const SignUpScreen = ({ onBackToLogin }: SignUpScreenProps) => {
           lastName, 
           email,
           password,
-          friends: null,
+          friends: [],
           aboutme: null
         }),
       });

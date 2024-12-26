@@ -41,7 +41,7 @@ const LoginScreen = () => {
       const responseText = await response.text();
       console.log('Response:', responseText);
       
-      if (responseText === 'failed to validate user') {
+      if (responseText === 'failed to validate user' || responseText === null) {
         throw new Error('Invalid credentials');
       }
       
@@ -50,7 +50,7 @@ const LoginScreen = () => {
     })
     .then(token => {
       setAuthToken(token); // Store token globally
-      console.log('Token received:');
+      console.log('Token received');
       Alert.alert('Success', 'Logged in successfully');
       navigation.navigate('Main');
     })
