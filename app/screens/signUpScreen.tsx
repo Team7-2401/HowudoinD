@@ -1,30 +1,103 @@
-import React from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, Alert } from 'react-native';
+import { SERVER_URL } from '../config/constants';
 
 interface SignUpScreenProps {
   onBackToLogin: () => void;
 }
 
 const SignUpScreen = ({ onBackToLogin }: SignUpScreenProps) => {
+  const [name, setName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSignUp = async () => {
+    if (!name || !lastName || !email || !password) {
+      Alert.alert('Error', 'Please fill in all fields');
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const response = await fetch(`${SERVER_URL}/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name,
+          lastName, 
+          email,
+          password,
+          friends: null,
+          aboutme: null
+        }),
+      });
+
+      const result = await response.text();
+      
+      if (result === '0') {
+        Alert.alert('Success', 'Registration successful!', [
+          { text: 'OK', onPress: onBackToLogin }
+        ]);
+      } else {
+        console.log('Registration failed:', result);
+        Alert.alert('Error', 'Registration failed. Please try again.');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Network error. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <View style={styles.container}>
-      {/* Logo Section */}
       <Image source={require('../../assets/images/logo.png')} style={styles.logo} />
 
-      {/* Input Fields */}
       <View style={styles.inputContainer}>
-        <TextInput style={styles.input} placeholder="Name" />
-        <TextInput style={styles.input} placeholder="Last Name" />
-        <TextInput style={styles.input} placeholder="Email" keyboardType="email-address" />
-        <TextInput style={styles.input} placeholder="Password" secureTextEntry />
+        <TextInput 
+          style={styles.input} 
+          placeholder="Name" 
+          value={name}
+          onChangeText={setName}
+        />
+        <TextInput 
+          style={styles.input} 
+          placeholder="Last Name" 
+          value={lastName}
+          onChangeText={setLastName}
+        />
+        <TextInput 
+          style={styles.input} 
+          placeholder="Email" 
+          keyboardType="email-address"
+          value={email}
+          onChangeText={setEmail}
+          autoCapitalize="none"
+        />
+        <TextInput 
+          style={styles.input} 
+          placeholder="Password" 
+          secureTextEntry
+          value={password}
+          onChangeText={setPassword}
+        />
       </View>
 
-      {/* Sign Up Button */}
-      <TouchableOpacity style={styles.button}>
-        <Text style={styles.buttonText}>SIGN UP</Text>
+      <TouchableOpacity 
+        style={[styles.button, isLoading && styles.buttonDisabled]}
+        onPress={handleSignUp}
+        disabled={isLoading}
+      >
+        <Text style={styles.buttonText}>
+          {isLoading ? 'SIGNING UP...' : 'SIGN UP'}
+        </Text>
       </TouchableOpacity>
 
-      {/* Footer Links */}
       <View style={styles.footer}>
         <Text style={styles.footerText}>OR</Text>
         <TouchableOpacity onPress={onBackToLogin}>
@@ -48,12 +121,6 @@ const styles = StyleSheet.create({
     height: 100,
     marginBottom: 10,
   },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#ffffff',
-    marginBottom: 20,
-  },
   inputContainer: {
     width: '100%',
     marginBottom: 20,
@@ -72,6 +139,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 40,
     borderRadius: 20,
     marginBottom: 20,
+  },
+  buttonDisabled: {
+    backgroundColor: '#cccccc',
   },
   buttonText: {
     color: '#0078FF',
