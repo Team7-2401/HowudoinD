@@ -46,7 +46,7 @@ const FriendsScreen: React.FC = () => {
     try {
       const token = await getAuthToken();
       if (!token) {
-        Alert.alert('Error', 'No authentication token found');
+        Alert.alert('Error', 'Not authenticated');
         return;
       }
 
@@ -62,11 +62,18 @@ const FriendsScreen: React.FC = () => {
         throw new Error('Failed to fetch friends');
       }
 
-      const result = await response.json();
-      console.log('API Response:', result);
+      const responseText = await response.text();
+      console.log('API Response:', responseText);
 
+      if (!responseText) {
+        setFriends([]);
+        return;
+      }
+
+      const result = JSON.parse(responseText);
+      
       const transformedFriends = result.map((friend: any) => ({
-        id: friend.email || 'No email', // Use email as the unique ID
+        id: friend.email || 'No email',
         email: friend.email || 'No email',
         status: friend.status || 'Send Request',
       }));
