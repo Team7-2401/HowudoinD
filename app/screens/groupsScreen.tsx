@@ -133,7 +133,10 @@ const GroupScreen: React.FC = () => {
         style={[styles.createGroupButton, styles.buttonShadow]}
         onPress={() => navigation.navigate('groupcreationScreen')}
       >
-        <Text style={styles.createGroupButtonText}>Create New Group</Text>
+        <Text style={styles.createGroupButtonText}>
+          Create New Group /{'\n'}
+          Add Friends to Group
+        </Text>
         <View style={styles.iconContainer}>
           <Ionicons name="people" size={45} color="#FFFFFF" />
           <View style={styles.plusIconWrapper}>
