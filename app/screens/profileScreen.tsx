@@ -1,13 +1,14 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { setAuthToken } from '../config/tokenStorage';
+import { setAuthToken, setUserEmail } from '../config/tokenStorage';
 
 const ProfileScreen = () => {
   const navigation = useNavigation();
 
   const handleLogout = () => {
     setAuthToken(null); // Reset token
+    setUserEmail(null);
     navigation.navigate('Login');
   };
 

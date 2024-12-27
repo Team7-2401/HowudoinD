@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput, Alert } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { getAuthToken } from '../config/tokenStorage';
+import { SERVER_URL } from '../config/constants';
 
 type NavigationProp = NativeStackNavigationProp<{
   groupdetailScreen: { groupId: string; groupName: string };
@@ -26,6 +28,47 @@ const GroupScreen: React.FC = () => {
     { id: '6', name: 'Group 1' },
   ]);
   const [searchGroup, setSearchGroup] = useState('');
+
+  const handleSearchGroup = async () => {
+    try {
+      const token = await getAuthToken();
+      if (!token) {
+        Alert.alert('Error', 'Not authenticated');
+        return;
+      }
+      //sanitize searchGroup
+      searchGroup 
+
+      const response = await fetch(`${SERVER_URL}/groups/${searchGroup}/members`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          throw new Error("Server failure?")
+        }
+        return;
+      }
+
+      const responseText = await response.text();
+      if (responseText) {
+        const data = JSON.parse(responseText)
+        navigation.navigate('groupmessagingScreen', {
+          groupId: searchGroup,
+          groupName: `Group ${searchGroup}`
+        });
+      } else {
+        Alert.alert('Error', "Group not found")
+      }
+    } catch (error) {
+      console.error('Error searching group:', error);
+      Alert.alert('Error', 'Failed to search group');
+    }
+  };
 
   const renderGroupItem = ({ item }: { item: Group }) => (
     <View style={styles.groupCard}>
@@ -74,7 +117,7 @@ const GroupScreen: React.FC = () => {
         </View>
         <TouchableOpacity 
           style={styles.searchButton}
-          onPress={() => handleSearchGroup(searchGroup)}
+          onPress={handleSearchGroup}
         >
           <Text style={styles.buttonText}>Search Group</Text>
         </TouchableOpacity>

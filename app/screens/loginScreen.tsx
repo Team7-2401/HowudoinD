@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import SignUpScreen from './signUpScreen';
-import { setAuthToken } from '../config/tokenStorage';
+import { setAuthToken, setUserEmail } from '../config/tokenStorage';
 
 //since we're devevloping using android emulator, we need to use this IP,
 //if you're using ios emulator, you can use localhost
@@ -50,6 +50,7 @@ const LoginScreen = () => {
     })
     .then(token => {
       setAuthToken(token); // Store token globally
+      setUserEmail(email);
       console.log('Token received');
       Alert.alert('Success', 'Logged in successfully');
       navigation.navigate('Main');
