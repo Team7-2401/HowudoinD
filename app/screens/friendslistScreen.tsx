@@ -1,5 +1,13 @@
-import React from 'react';
-import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet } from 'react-native';
+import React, { useState, useEffect, useMemo } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  FlatList,
+  StyleSheet,
+  Alert,
+} from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -18,7 +26,7 @@ interface Friend {
 
 const removeDuplicateFriends = (friends: Friend[]): Friend[] => {
   const uniqueEmails = new Set();
-  return friends.filter(friend => {
+  return friends.filter((friend) => {
     const isDuplicate = uniqueEmails.has(friend.email);
     uniqueEmails.add(friend.email);
     return !isDuplicate;
@@ -26,24 +34,26 @@ const removeDuplicateFriends = (friends: Friend[]): Friend[] => {
 };
 
 const FriendsScreen: React.FC = () => {
-  const [friends, setFriends] = React.useState<Friend[]>([]);
-  const [isLoading, setIsLoading] = React.useState(true);
-  const [currentId, setCurrentId] = React.useState(1);
+  const [friends, setFriends] = useState<Friend[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState<string>('');
   const navigation = useNavigation<NavigationProp>();
 
+  // Fetch friends from the server
   const fetchFriends = async () => {
     try {
       const token = await getAuthToken();
       if (!token) {
-        throw new Error('No authentication token found');
+        Alert.alert('Error', 'No authentication token found');
+        return;
       }
 
       const response = await fetch(`${SERVER_URL}/friends`, {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
       });
 
       if (!response.ok) {
@@ -53,60 +63,40 @@ const FriendsScreen: React.FC = () => {
       const result = await response.json();
       console.log('API Response:', result);
 
-      if (!result || result.length === 0) {
-        setFriends([]);
-        return;
-      }
-
-      let tempId = currentId;
       const transformedFriends = result.map((friend: any) => ({
-        id: (tempId++).toString(),
+        id: friend.email || 'No email', // Use email as the unique ID
         email: friend.email || 'No email',
         status: friend.status || 'Send Request',
       }));
 
       const uniqueFriends = removeDuplicateFriends(transformedFriends);
-      setCurrentId(tempId);
       setFriends(uniqueFriends);
     } catch (error) {
       console.error('Error fetching friends:', error);
-      setFriends([]);
+      Alert.alert('Error', 'Failed to fetch friends');
     } finally {
       setIsLoading(false);
     }
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     fetchFriends();
   }, []);
 
-  const [searchQuery, setSearchQuery] = React.useState<string>('');
-
-  const filteredFriends = React.useMemo(() => {
+  // Filtered friends based on search query
+  const filteredFriends = useMemo(() => {
     return friends.filter((friend) =>
       friend.email.toLowerCase().includes(searchQuery.toLowerCase())
     );
   }, [friends, searchQuery]);
 
-  const requestsFriends = React.useMemo(() => {
-    return friends.filter((friend) => friend.status === 'Request Sent');
-  }, [friends]);
-
+  // Navigate to the FriendMessagingScreen with email as friendId
   const handleMessagePress = (friend: Friend) => {
+    console.log(`Navigating to messaging screen with friendId: ${friend.email}`);
     navigation.navigate('friendsmessagingScreen', {
-      friendId: friend.id,
-      friendName: friend.email
+      friendId: friend.email, // Pass email as friendId
+      friendName: friend.email, // Use email as a fallback for the name
     });
-  };
-
-  const handleAcceptRequest = (id: string) => {
-    setFriends((prevFriends) =>
-      prevFriends.map((friend) =>
-        friend.id === id
-          ? { ...friend, status: 'Friends' }
-          : friend
-      )
-    );
   };
 
   const renderFriendItem = ({ item }: { item: Friend }) => (
@@ -114,25 +104,11 @@ const FriendsScreen: React.FC = () => {
       <View style={styles.textContainer}>
         <Text style={styles.friendEmail}>{item.email}</Text>
       </View>
-      <View style={styles.buttonsContainer}>
-        <TouchableOpacity 
-          style={styles.messageButton}
-          onPress={() => handleMessagePress(item)}
-        >
-          <Ionicons name="chatbox-outline" size={20} color="#3E87FE" />
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
-
-  const renderRequestItem = ({ item }: { item: Friend }) => (
-    <View style={styles.requestCard}>
-      <Text style={styles.friendName}>{`${item.firstName} ${item.lastName}`}</Text>
       <TouchableOpacity
-        style={styles.acceptButton}
-        onPress={() => handleAcceptRequest(item.id)}
+        style={styles.messageButton}
+        onPress={() => handleMessagePress(item)}
       >
-        <Text style={styles.acceptButtonText}>Accept</Text>
+        <Ionicons name="chatbox-outline" size={20} color="#3E87FE" />
       </TouchableOpacity>
     </View>
   );
@@ -141,7 +117,7 @@ const FriendsScreen: React.FC = () => {
     <View style={styles.container}>
       <Text style={styles.header}>Howudoin</Text>
       <View style={styles.headerLine} />
-      <TouchableOpacity 
+      <TouchableOpacity
         style={styles.backButton}
         onPress={() => navigation.goBack()}
       >
@@ -155,20 +131,16 @@ const FriendsScreen: React.FC = () => {
         value={searchQuery}
         onChangeText={setSearchQuery}
       />
-      <FlatList
-        data={filteredFriends}
-        renderItem={renderFriendItem}
-        keyExtractor={(item) => item.id}
-        style={styles.friendList}
-      />
-      {/* <Text style={styles.subHeader}>Requests Received...</Text>
-      <FlatList
-        data={requestsFriends}
-        renderItem={renderRequestItem}
-        keyExtractor={(item) => item.id}
-        style={styles.requestList}
-        We can't have this because of the way the backend is designed
-      /> */}
+      {isLoading ? (
+        <Text>Loading...</Text>
+      ) : (
+        <FlatList
+          data={filteredFriends}
+          renderItem={renderFriendItem}
+          keyExtractor={(item) => item.id}
+          style={styles.friendList}
+        />
+      )}
     </View>
   );
 };
@@ -237,61 +209,12 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: '#000000',
   },
-  buttonsContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
   messageButton: {
     backgroundColor: '#FFFFFF',
     padding: 8,
     borderRadius: 8,
     borderWidth: 1,
     borderColor: '#3E87FE',
-  },
-  requestList: {
-    marginBottom: 40, // Space for tab bar
-    minHeight: 200, // Minimum height for 3 cards (approx)
-    paddingBottom: 16,
-  },
-  requestCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    borderWidth: 1,
-    borderColor: '#3E87FE',
-    borderRadius: 8,
-    padding: 12,
-    marginVertical: 6, // Consistent spacing between cards
-    height: 50, // Fixed height for consistent card size
-  },
-  requestReceivedIndicator: {
-    backgroundColor: '#000000',
-    paddingVertical: 6,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  requestReceivedIndicatorText: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-  },
-  acceptButton: {
-    backgroundColor: '#000000',
-    paddingVertical: 8,
-    paddingHorizontal: 24, // Increased horizontal padding
-    minWidth: 70, // Added minimum width
-    minHeight: 40, // Added minimum height
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  acceptButtonText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: 'bold',
   },
 });
 
