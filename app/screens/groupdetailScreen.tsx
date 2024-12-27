@@ -1,33 +1,68 @@
-import React from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, ScrollView } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, ScrollView, Alert } from 'react-native';
+import { useNavigation, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { getAuthToken } from '../config/tokenStorage';
+import { SERVER_URL } from '../config/constants';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
 type NavigationProp = NativeStackNavigationProp<{
   GroupsList: undefined;
 }>;
 
-interface GroupMember {
-  id: string;
-  name: string;
+interface Props {
+  route: RouteProp<{
+    groupdetailScreen: {
+      groupId: string;
+    }
+  }, 'groupdetailScreen'>;
+  navigation: NavigationProp<any>;
 }
 
-const GroupDetailScreen: React.FC = () => {
-  const navigation = useNavigation<NavigationProp>();
+interface GroupMember {
+  email: string;
+  name: string;
+  lastName: string;
+}
 
-  const [members] = React.useState([
-    { id: '1', name: 'John Smith' },
-    { id: '2', name: 'Sarah Johnson' },
-    { id: '3', name: 'Miguel Rodriguez' },
-    { id: '4', name: 'Aisha Khan' },
-    { id: '5', name: 'Chen Wei' },
-    { id: '6', name: 'Emma Wilson' },
-    { id: '7', name: 'Ahmed Hassan' },
-    { id: '8', name: 'Sofia Garcia' },
-    { id: '9', name: 'Liam O\'Connor' },
-    { id: '10', name: 'Priya Patel' }
-  ]);
+const GroupDetailScreen: React.FC<Props> = ({ route, navigation }) => {
+  const { groupId } = route.params;
+  const [members, setMembers] = useState<GroupMember[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchMembers = async () => {
+    try {
+      const token = await getAuthToken();
+      if (!token) {
+        Alert.alert('Error', 'Not authenticated');
+        return;
+      }
+
+      const response = await fetch(`${SERVER_URL}/groups/${groupId}/members`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch members');
+      }
+
+      const data = await response.json();
+      setMembers(data);
+    } catch (error) {
+      console.error('Error fetching members:', error);
+      Alert.alert('Error', 'Failed to fetch group members');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  React.useEffect(() => {
+    fetchMembers();
+  }, [groupId]);
 
   return (
     <View style={styles.container}>
@@ -42,21 +77,23 @@ const GroupDetailScreen: React.FC = () => {
         <Text style={styles.backText}>Back</Text>
       </TouchableOpacity>
 
+      {/* <Text style={styles.groupId}>Group ID: {groupId}</Text> */}
+
       {/* Group Details */}
       <Text style={styles.subHeader}>Group Details...</Text>
       <View style={styles.inputContainer}>
-        <Text style={styles.inputLabel}>Group Name</Text>
-        <TextInput style={styles.inputField} value="Group 1" editable={false} />
+        <Text style={styles.inputLabel}>Group ID</Text>
+        <TextInput style={styles.inputField} value={`${groupId}`} editable={false} />
       </View>
-      <View style={styles.inputContainer}>
+      {/* <View style={styles.inputContainer}>
         <Text style={styles.inputLabel}>Creation Time</Text>
         <TextInput 
           style={styles.inputField} 
           value="December 24, 2024, 10:30 AM" 
           editable={false} 
         />
-      </View>
-      <View style={styles.inputContainer}>
+      </View> */}
+      {/* <View style={styles.inputContainer}>
         <Text style={styles.inputLabel}>Group Description</Text>
         <ScrollView style={[styles.inputField, styles.descriptionField]}>
           <Text>
@@ -74,7 +111,7 @@ const GroupDetailScreen: React.FC = () => {
             We're always looking for new ideas and suggestions to improve our study sessions!
           </Text>
         </ScrollView>
-      </View>
+      </View> */}
 
       {/* Group Members */}
       <Text style={styles.subHeader}>Group Members...</Text>
@@ -82,10 +119,10 @@ const GroupDetailScreen: React.FC = () => {
         data={members}
         renderItem={({ item }) => (
           <View style={styles.memberCard}>
-            <Text style={styles.memberName}>{item.name}</Text>
+            <Text style={styles.memberName}>{item.email}</Text>
           </View>
         )}
-        keyExtractor={item => item.id}
+        keyExtractor={(item, index) => index.toString()}
         style={styles.membersList}
       />
     </View>
@@ -165,10 +202,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',  // Center content horizontally
   },
   memberName: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#000000',
     textAlign: 'center',  // Center text
+  },
+  groupId: {
+    fontSize: 16,
+    color: '#000000',
+    marginBottom: 16,
   },
 });
 
