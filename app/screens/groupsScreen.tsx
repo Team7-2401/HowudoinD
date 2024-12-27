@@ -3,7 +3,7 @@ import { View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput, Alert } 
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { getAuthToken } from '../config/tokenStorage';
+import { getAuthToken, getUserEmail } from '../config/tokenStorage';
 import { SERVER_URL } from '../config/constants';
 
 type NavigationProp = NativeStackNavigationProp<{
@@ -28,6 +28,13 @@ const GroupScreen: React.FC = () => {
     { id: '6', name: 'Group 1' },
   ]);
   const [searchGroup, setSearchGroup] = useState('');
+  const [userGroups, setUserGroups] = useState<Group[]>([]);
+
+  const addGroupToList = (groupId: string) => {
+    if (!userGroups.some(group => group.id === groupId)) {
+      setUserGroups([...userGroups, { id: groupId }]);
+    }
+  };
 
   const handleSearchGroup = async () => {
     try {
@@ -56,13 +63,20 @@ const GroupScreen: React.FC = () => {
 
       const responseText = await response.text();
       if (responseText) {
-        const data = JSON.parse(responseText)
-        navigation.navigate('groupmessagingScreen', {
-          groupId: searchGroup,
-          groupName: `Group ${searchGroup}`
-        });
+        const members = JSON.parse(responseText);
+        const userEmail = getUserEmail();
+        
+        if (members.some((member: any) => member.email === userEmail)) {
+          addGroupToList(searchGroup);
+          navigation.navigate('groupmessagingScreen', {
+            groupId: searchGroup,
+            groupName: `Group ${searchGroup}`
+          });
+        } else {
+          Alert.alert('Error', 'You are not a member of this group');
+        }
       } else {
-        Alert.alert('Error', "Group not found")
+        Alert.alert('Error', "Group not found");
       }
     } catch (error) {
       console.error('Error searching group:', error);
@@ -72,13 +86,13 @@ const GroupScreen: React.FC = () => {
 
   const renderGroupItem = ({ item }: { item: Group }) => (
     <View style={styles.groupCard}>
-      <Text style={styles.groupName}>{item.name}</Text>
+      <Text style={styles.groupName}>ID: {item.id}</Text>
       <View style={styles.groupActions}>
         <TouchableOpacity
           style={styles.detailsButton}
           onPress={() => navigation.navigate('groupdetailScreen', {
             groupId: item.id,
-            groupName: item.name
+            groupName: `Group ${item.id}`
           })}
         >
           <Text style={styles.detailsButtonText}>Details</Text>
@@ -87,7 +101,7 @@ const GroupScreen: React.FC = () => {
           style={styles.messageButton}
           onPress={() => navigation.navigate('groupmessagingScreen', {
             groupId: item.id,
-            groupName: item.name
+            groupName: `Group ${item.id}`
           })}
         >
           <Ionicons name="chatbox-outline" size={20} color="#3E87FE" />
@@ -123,12 +137,14 @@ const GroupScreen: React.FC = () => {
         </TouchableOpacity>
       </View>
 
-      {/* <FlatList
-        data={groups}
+      <Text style={styles.sectionTitle}>Your Groups</Text>
+      <FlatList
+        data={userGroups}
         renderItem={renderGroupItem}
-        keyExtractor={(item) => item.id}
+        keyExtractor={item => item.id}
         style={styles.groupList}
-      /> */}
+      />
+      
       <TouchableOpacity 
         style={[styles.createGroupButton, styles.buttonShadow]}
         onPress={() => navigation.navigate('groupcreationScreen')}
@@ -226,6 +242,7 @@ const styles = StyleSheet.create({
   },
   groupName: {
     fontSize: 16,
+    padding: 4,
     fontWeight: 'bold',
     color: '#000000',
   },
@@ -240,6 +257,8 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 8,
     marginRight: 8, // Added margin
+    position: 'relative',
+    
   },
   detailsButtonText: {
     fontSize: 14,
@@ -302,6 +321,33 @@ const styles = StyleSheet.create({
   arrowSvg: {
     width: 24,
     height: 24,
-  }
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginVertical: 16,
+    paddingHorizontal: 16,
+  },
+  groupId: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#000000',
+  },
+  groupCard: {
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#3E87FE',
+    borderRadius: 8,
+    marginHorizontal: 16,
+    marginBottom: 8,
+  },
+  groupInfo: {
+    flex: 1,
+  },
+  groupId: {
+    fontSize: 14,
+    color: '#666666',
+    marginTop: 4,
+  },
 });
 export default GroupScreen;
