@@ -1,5 +1,15 @@
 import React from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, FlatList, Alert, SafeAreaView, Platform } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  FlatList,
+  Alert,
+  SafeAreaView,
+  Platform,
+} from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -33,40 +43,32 @@ const FriendMessagingScreen: React.FC<Props> = ({ route, navigation }) => {
   const [message, setMessage] = React.useState('');
   const [messages, setMessages] = React.useState<Message[]>([]);
 
+  // Fetch messages function
   const fetchMessages = async () => {
     try {
       const token = await getAuthToken();
       if (!token) {
-        Alert.alert('Error', 'Not authenticated');
-        return;
+        throw new Error('Token not available');
       }
 
       const receiverEmail = encodeURIComponent(friendId);
-      console.log('Receiver Email:', receiverEmail);
-
       const response = await fetch(`${SERVER_URL}/messages?email=${receiverEmail}`, {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch messages');
-      }
+      if (!response.ok) throw new Error('Failed to fetch messages');
 
       const data = await response.json();
-      console.log('Messages Response:', data);
-      
-      // Transform messages for display with timestamp handling
       const transformedMessages = data.map((msg: any, index: number) => ({
-        id: index.toString(), // Use index as fallback id
+        id: index.toString(),
         text: msg.content || '',
         timestamp: new Date(msg.timestamp || Date.now()),
-        isSent: msg.sender?.email === getUserEmail()
+        isSent: msg.sender?.email === getUserEmail(),
       }));
-
       setMessages(transformedMessages);
     } catch (error) {
       console.error('Error fetching messages:', error);
@@ -74,44 +76,30 @@ const FriendMessagingScreen: React.FC<Props> = ({ route, navigation }) => {
     }
   };
 
-  const POLLING_INTERVAL = 3000; // 3 seconds
-
-  React.useEffect(() => {
-    fetchMessages(); // Initial fetch
-    
-    const intervalId = setInterval(() => {
-      fetchMessages();
-    }, POLLING_INTERVAL);
-
-    // Cleanup on unmount
-    return () => clearInterval(intervalId);
-  }, [friendId]);
-
+  // Send message function
   const sendMessage = async () => {
     try {
       const token = await getAuthToken();
       const userEmail = getUserEmail();
-      
+
       if (!token || !userEmail || !message.trim()) {
         Alert.alert('Error', 'Cannot send empty message');
         return;
       }
-  
+
       const response = await fetch(`${SERVER_URL}/messages/send`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           content: message,
           sender: { email: userEmail },
-          receivers: [{ 
-            email: friendId
-          }]
-        })
+          receivers: [{ email: friendId }],
+        }),
       });
-  
+
       if (!response.ok) {
         throw new Error('Failed to send message, server error');
       }
@@ -121,7 +109,7 @@ const FriendMessagingScreen: React.FC<Props> = ({ route, navigation }) => {
       if (responseText !== '0') {
         throw new Error('Failed to send message, response text not 0');
       }
-  
+
       setMessage(''); // Clear input
       await fetchMessages(); // Refresh messages
     } catch (error) {
@@ -130,19 +118,50 @@ const FriendMessagingScreen: React.FC<Props> = ({ route, navigation }) => {
     }
   };
 
+  // Fetch messages on mount and set up polling
+  React.useEffect(() => {
+    let isMounted = true;
+
+    const initMessages = async () => {
+      if (isMounted) {
+        await fetchMessages();
+      }
+    };
+
+    initMessages();
+
+    // Poll messages every 3 seconds
+    const intervalId = setInterval(() => {
+      if (isMounted) {
+        fetchMessages();
+      }
+    }, 3000);
+
+    return () => {
+      isMounted = false;
+      clearInterval(intervalId);
+    };
+  }, [friendId]);
+
   const renderMessage = ({ item }: { item: Message }) => (
-    <View style={[
-      styles.messageWrapper,
-      item.isSent ? styles.sentWrapper : styles.receivedWrapper
-    ]}>
-      <View style={[
-        styles.messageBox,
-        item.isSent ? styles.sentMessage : styles.receivedMessage
-      ]}>
-        <Text style={[
-          styles.messageText,
-          item.isSent ? styles.sentMessageText : styles.receivedMessageText
-        ]}>
+    <View
+      style={[
+        styles.messageWrapper,
+        item.isSent ? styles.sentWrapper : styles.receivedWrapper,
+      ]}
+    >
+      <View
+        style={[
+          styles.messageBox,
+          item.isSent ? styles.sentMessage : styles.receivedMessage,
+        ]}
+      >
+        <Text
+          style={[
+            styles.messageText,
+            item.isSent ? styles.sentMessageText : styles.receivedMessageText,
+          ]}
+        >
           {item.text}
         </Text>
         <Text style={styles.timestamp}>
@@ -156,7 +175,7 @@ const FriendMessagingScreen: React.FC<Props> = ({ route, navigation }) => {
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
         <View style={styles.header}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.backButton}
             onPress={() => navigation.goBack()}
           >
@@ -227,16 +246,11 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#000000',
   },
-  status: {
-    fontSize: 12,
-    color: '#65B741',
-    marginTop: 2,
-  },
   messageContainer: {
     flex: 1,
   },
   messageContentContainer: {
-    paddingBottom: 20, // Add space between last message and input
+    paddingBottom: 20,
   },
   inputContainer: {
     flexDirection: 'row',
