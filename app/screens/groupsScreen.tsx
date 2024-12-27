@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput, Alert } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput, Alert, SafeAreaView, Platform } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -111,60 +111,66 @@ const GroupScreen: React.FC = () => {
   );
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.header}>Howudoin</Text>
-      <View style={styles.headerLine} />
-      <Text style={styles.subHeader}>Find groups...</Text>
-      
-      <View style={styles.searchSection}>
-        <View style={styles.searchBox}>
-          <Ionicons name="search" size={20} style={styles.searchIcon} />
-          <TextInput 
-            style={styles.searchInput} 
-            placeholder="Search groups by id" 
-            placeholderTextColor="#9CA3AF"
-            value={searchGroup}
-            onChangeText={setSearchGroup}
-            autoCapitalize="none"
-            autoCorrect={false}
-          />
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.container}>
+        <Text style={styles.header}>Howudoin</Text>
+        <View style={styles.headerLine} />
+        <Text style={styles.subHeader}>Find groups...</Text>
+        
+        <View style={styles.searchSection}>
+          <View style={styles.searchBox}>
+            <Ionicons name="search" size={20} style={styles.searchIcon} />
+            <TextInput 
+              style={styles.searchInput} 
+              placeholder="Search groups by id" 
+              placeholderTextColor="#9CA3AF"
+              value={searchGroup}
+              onChangeText={setSearchGroup}
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+          </View>
+          <TouchableOpacity 
+            style={styles.searchButton}
+            onPress={handleSearchGroup}
+          >
+            <Text style={styles.buttonText}>Search Group</Text>
+          </TouchableOpacity>
         </View>
+
+        <Text style={styles.sectionTitle}>Your Groups</Text>
+        <FlatList
+          data={userGroups}
+          renderItem={renderGroupItem}
+          keyExtractor={item => item.id}
+          style={styles.groupList}
+        />
+        
         <TouchableOpacity 
-          style={styles.searchButton}
-          onPress={handleSearchGroup}
+          style={[styles.createGroupButton, styles.buttonShadow]}
+          onPress={() => navigation.navigate('groupcreationScreen')}
         >
-          <Text style={styles.buttonText}>Search Group</Text>
+          <Text style={styles.createGroupButtonText}>
+            Create New Group /{'\n'}
+            Add Friends to Group
+          </Text>
+          <View style={styles.iconContainer}>
+            <Ionicons name="people" size={45} color="#FFFFFF" />
+            <View style={styles.plusIconWrapper}>
+              <Ionicons name="add-circle" size={35} color="#FFFFFF" />
+            </View>
+          </View>
         </TouchableOpacity>
       </View>
-
-      <Text style={styles.sectionTitle}>Your Groups</Text>
-      <FlatList
-        data={userGroups}
-        renderItem={renderGroupItem}
-        keyExtractor={item => item.id}
-        style={styles.groupList}
-      />
-      
-      <TouchableOpacity 
-        style={[styles.createGroupButton, styles.buttonShadow]}
-        onPress={() => navigation.navigate('groupcreationScreen')}
-      >
-        <Text style={styles.createGroupButtonText}>
-          Create New Group /{'\n'}
-          Add Friends to Group
-        </Text>
-        <View style={styles.iconContainer}>
-          <Ionicons name="people" size={45} color="#FFFFFF" />
-          <View style={styles.plusIconWrapper}>
-            <Ionicons name="add-circle" size={35} color="#FFFFFF" />
-          </View>
-        </View>
-      </TouchableOpacity>
-    </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
   container: {
     flex: 1,
     backgroundColor: '#FFFFFF',
@@ -175,6 +181,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#3E87FE',
     marginVertical: 16,
+    marginTop: Platform.OS === 'ios' ? 0 : 16,
   },
   headerLine: {
     height: 1,

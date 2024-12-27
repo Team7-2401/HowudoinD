@@ -7,6 +7,8 @@ import {
   FlatList,
   StyleSheet,
   Alert,
+  SafeAreaView,
+  Platform,
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
@@ -114,38 +116,44 @@ const FriendsScreen: React.FC = () => {
   );
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.header}>Howudoin</Text>
-      <View style={styles.headerLine} />
-      <TouchableOpacity
-        style={styles.backButton}
-        onPress={() => navigation.goBack()}
-      >
-        <Ionicons name="chevron-back" size={24} color="#3E87FE" />
-        <Text style={styles.backText}>Back</Text>
-      </TouchableOpacity>
-      <Text style={styles.subHeader}>Find your friends...</Text>
-      <TextInput
-        style={styles.searchInput}
-        placeholder="Search friends..."
-        value={searchQuery}
-        onChangeText={setSearchQuery}
-      />
-      {isLoading ? (
-        <Text>Loading...</Text>
-      ) : (
-        <FlatList
-          data={filteredFriends}
-          renderItem={renderFriendItem}
-          keyExtractor={(item) => item.id}
-          style={styles.friendList}
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.container}>
+        <Text style={styles.header}>Howudoin</Text>
+        <View style={styles.headerLine} />
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
+          <Ionicons name="chevron-back" size={24} color="#3E87FE" />
+          <Text style={styles.backText}>Back</Text>
+        </TouchableOpacity>
+        <Text style={styles.subHeader}>Find your friends...</Text>
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search friends..."
+          value={searchQuery}
+          onChangeText={setSearchQuery}
         />
-      )}
-    </View>
+        {isLoading ? (
+          <Text>Loading...</Text>
+        ) : (
+          <FlatList
+            data={filteredFriends}
+            renderItem={renderFriendItem}
+            keyExtractor={(item) => item.id}
+            style={styles.friendList}
+          />
+        )}
+      </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
   container: {
     flex: 1,
     backgroundColor: '#FFFFFF',
@@ -156,6 +164,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#3E87FE',
     marginVertical: 16,
+    marginTop: Platform.OS === 'ios' ? 0 : 16, // Adjust top margin for iOS
   },
   headerLine: {
     height: 1,

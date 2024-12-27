@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, FlatList, TextInput, Alert, Modal } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, TextInput, Alert, Modal, SafeAreaView, Platform } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -179,93 +179,98 @@ const GroupCreationScreen: React.FC = () => {
   );
 
   return (
-    <View style={styles.container}>
-      {/* Header */}
-      <Text style={styles.header}>Howudoin</Text>
-      <View style={styles.headerLine} />
-      <TouchableOpacity 
-        style={styles.backButton}
-        onPress={() => navigation.goBack()}
-      >
-        <Ionicons name="chevron-back" size={24} color="#3E87FE" />
-        <Text style={styles.backText}>Back</Text>
-      </TouchableOpacity>
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.container}>
+        <Text style={styles.header}>Howudoin</Text>
+        <View style={styles.headerLine} />
+        <TouchableOpacity 
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
+          <Ionicons name="chevron-back" size={24} color="#3E87FE" />
+          <Text style={styles.backText}>Back</Text>
+        </TouchableOpacity>
 
-      {/* Group Details Section */}
-      <Text style={styles.subHeader}>New Group Details...</Text>
-      <View style={styles.inputContainer}>
-        <Text style={styles.inputLabel}>Group Name</Text>
-        <TextInput
-          style={styles.inputField}
-          placeholder="Enter group name"
-          value={groupName}
-          onChangeText={setGroupName}
+        {/* Group Details Section */}
+        <Text style={styles.subHeader}>New Group Details...</Text>
+        <View style={styles.inputContainer}>
+          <Text style={styles.inputLabel}>Group Name</Text>
+          <TextInput
+            style={styles.inputField}
+            placeholder="Enter group name"
+            value={groupName}
+            onChangeText={setGroupName}
+          />
+        </View>
+        <View style={styles.inputContainer}>
+          <Text style={styles.inputLabel}>Group Description</Text>
+          <TextInput
+            style={[styles.inputField, styles.descriptionField]}
+            placeholder="Enter group description"
+            value={groupDescription}
+            onChangeText={setGroupDescription}
+            multiline
+          />
+        </View>
+
+        {/* Friends List */}
+        <Text style={styles.subHeader}>Add your friends...</Text>
+        <FlatList
+          data={friends}
+          renderItem={renderFriendItem}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.friendList}
         />
-      </View>
-      <View style={styles.inputContainer}>
-        <Text style={styles.inputLabel}>Group Description</Text>
-        <TextInput
-          style={[styles.inputField, styles.descriptionField]}
-          placeholder="Enter group description"
-          value={groupDescription}
-          onChangeText={setGroupDescription}
-          multiline
-        />
-      </View>
+        <TouchableOpacity 
+          style={styles.createButton}
+          onPress={handleCreateGroup}
+        >
+          <Text style={styles.createButtonText}>Create Group</Text>
+        </TouchableOpacity>
 
-      {/* Friends List */}
-      <Text style={styles.subHeader}>Add your friends...</Text>
-      <FlatList
-        data={friends}
-        renderItem={renderFriendItem}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.friendList}
-      />
-      <TouchableOpacity 
-        style={styles.createButton}
-        onPress={handleCreateGroup}
-      >
-        <Text style={styles.createButtonText}>Create Group</Text>
-      </TouchableOpacity>
-
-      <Modal
-        animationType="fade"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Enter Group ID</Text>
-            <TextInput
-              style={styles.modalInput}
-              value={groupIdInput}
-              onChangeText={setGroupIdInput}
-              placeholder="Group ID"
-              keyboardType="numeric"
-            />
-            <View style={styles.modalButtons}>
-              <TouchableOpacity 
-                style={styles.modalButton}
-                onPress={() => setModalVisible(false)}
-              >
-                <Text style={styles.modalButtonText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity 
-                style={[styles.modalButton, styles.modalButtonPrimary]}
-                onPress={handleAddToGroup}
-              >
-                <Text style={[styles.modalButtonText, styles.modalButtonTextPrimary]}>Add</Text>
-              </TouchableOpacity>
+        <Modal
+          animationType="fade"
+          transparent={true}
+          visible={modalVisible}
+          onRequestClose={() => setModalVisible(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Enter Group ID</Text>
+              <TextInput
+                style={styles.modalInput}
+                value={groupIdInput}
+                onChangeText={setGroupIdInput}
+                placeholder="Group ID"
+                keyboardType="numeric"
+              />
+              <View style={styles.modalButtons}>
+                <TouchableOpacity 
+                  style={styles.modalButton}
+                  onPress={() => setModalVisible(false)}
+                >
+                  <Text style={styles.modalButtonText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={[styles.modalButton, styles.modalButtonPrimary]}
+                  onPress={handleAddToGroup}
+                >
+                  <Text style={[styles.modalButtonText, styles.modalButtonTextPrimary]}>Add</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
-        </View>
-      </Modal>
-    </View>
+        </Modal>
+      </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
   container: {
     flex: 1,
     backgroundColor: '#FFFFFF',
@@ -276,6 +281,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#3E87FE',
     marginVertical: 16,
+    marginTop: Platform.OS === 'ios' ? 0 : 16,
   },
   headerLine: {
     height: 1,

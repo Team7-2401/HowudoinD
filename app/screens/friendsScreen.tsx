@@ -1,7 +1,7 @@
 // File: FriendRequestScreen.tsx
 
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, Alert, SafeAreaView } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { Svg, Path } from 'react-native-svg';
@@ -159,97 +159,108 @@ const FriendRequestScreen: React.FC<Props> = ({ navigation }) => {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.header}>Howudoin</Text>
-      <View style={styles.headerLine} />
-      <Text style={styles.subHeader}>Add your friends...</Text>
-      
-      {/* Search section */}
-      <View style={styles.searchSection}>
-        <View style={styles.searchBox}>
-          <Ionicons name="search" size={20} style={styles.searchIcon} />
-          <TextInput 
-            style={styles.searchInput} 
-            placeholder="Search by email" 
-            placeholderTextColor="#9CA3AF"
-            value={searchEmail}
-            onChangeText={setSearchEmail}
-            autoCapitalize="none"
-            autoCorrect={false}
-          />
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.container}>
+        <View style={styles.headerContainer}>
+          <Text style={styles.header}>Howudoin</Text>
+          <View style={styles.headerLine} />
+          <Text style={styles.subHeader}>Add your friends...</Text>
         </View>
-        <TouchableOpacity 
-          style={styles.sendRequestButton}
-          onPress={() => handleSendFriendRequest(searchEmail)}
-        >
-          <Text style={styles.sendRequestButtonText}>Send Friend Request</Text>
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.spacer} />
-
-      {/* Accept Request section */}
-      <View style={styles.searchSection}>
-        <View style={styles.searchBox}>
-          <Ionicons name="person-add" size={20} style={styles.searchIcon} />
-          <TextInput 
-            style={styles.searchInput} 
-            placeholder="Accept friend request by email" 
-            placeholderTextColor="#9CA3AF"
-            value={acceptEmail}
-            onChangeText={setAcceptEmail}
-            autoCapitalize="none"
-            autoCorrect={false}
-          />
-        </View>
-        <TouchableOpacity 
-          style={styles.sendRequestButton}
-          onPress={() => handleAcceptFriendRequest(acceptEmail)}
-        >
-          <Text style={styles.sendRequestButtonText}>Accept Friend Request</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Rest of your existing code */}
-      <FlatList
-        data={filteredFriends}
-        renderItem={renderFriendItem}
-        keyExtractor={(item) => item.id}
-        style={styles.friendList}
-      />
-      <TouchableOpacity 
-        style={styles.bigBlueButton} 
-        onPress={handleFriendSelect}
-      >
-        <Text style={styles.bigButtonText}>Check your friends list</Text>
-        <View style={styles.arrowContainer}>
-          <Svg height="40" width="40" viewBox="0 0 24 24" style={styles.arrowSvg}>
-            <Path
-              d="M10 19l7-7-7-7"
-              fill="none"
-              stroke="#FFFFFF"
-              strokeWidth="5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+        
+        {/* Search section */}
+        <View style={styles.searchSection}>
+          <View style={styles.searchBox}>
+            <Ionicons name="search" size={20} style={styles.searchIcon} />
+            <TextInput 
+              style={styles.searchInput} 
+              placeholder="Search by email" 
+              placeholderTextColor="#9CA3AF"
+              value={searchEmail}
+              onChangeText={setSearchEmail}
+              autoCapitalize="none"
+              autoCorrect={false}
             />
-          </Svg>
+          </View>
+          <TouchableOpacity 
+            style={styles.sendRequestButton}
+            onPress={() => handleSendFriendRequest(searchEmail)}
+          >
+            <Text style={styles.sendRequestButtonText}>Send Friend Request</Text>
+          </TouchableOpacity>
         </View>
-      </TouchableOpacity>
-    </View>
+
+        <View style={styles.spacer} />
+
+        {/* Accept Request section */}
+        <View style={styles.searchSection}>
+          <View style={styles.searchBox}>
+            <Ionicons name="person-add" size={20} style={styles.searchIcon} />
+            <TextInput 
+              style={styles.searchInput} 
+              placeholder="Accept friend request by email" 
+              placeholderTextColor="#9CA3AF"
+              value={acceptEmail}
+              onChangeText={setAcceptEmail}
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+          </View>
+          <TouchableOpacity 
+            style={styles.sendRequestButton}
+            onPress={() => handleAcceptFriendRequest(acceptEmail)}
+          >
+            <Text style={styles.sendRequestButtonText}>Accept Friend Request</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Rest of your existing code */}
+        <FlatList
+          data={filteredFriends}
+          renderItem={renderFriendItem}
+          keyExtractor={(item) => item.id}
+          style={styles.friendList}
+        />
+        <TouchableOpacity 
+          style={styles.bigBlueButton} 
+          onPress={handleFriendSelect}
+        >
+          <Text style={styles.bigButtonText}>Check your friends list</Text>
+          <View style={styles.arrowContainer}>
+            <Svg height="40" width="40" viewBox="0 0 24 24" style={styles.arrowSvg}>
+              <Path
+                d="M10 19l7-7-7-7"
+                fill="none"
+                stroke="#FFFFFF"
+                strokeWidth="5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </Svg>
+          </View>
+        </TouchableOpacity>
+      </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
     backgroundColor: '#FFFFFF',
+  },
+  container: {
+    flex: 1,
     paddingHorizontal: 16,
+  },
+  headerContainer: {
+    paddingTop: 10,
+    paddingBottom: 16,
   },
   header: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#3E87FE',
-    marginVertical: 16, // Fixed by adding numeric value
+    marginVertical: 8,
   },
   subHeader: {
     fontSize: 18,
@@ -369,7 +380,7 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: '#3E87FE',
     marginTop: 4,
-    marginBottom: 16,
+    marginBottom: 12,
   },
   spacer: {
     height: 60,
