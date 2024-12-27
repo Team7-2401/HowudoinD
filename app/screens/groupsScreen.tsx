@@ -175,6 +175,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFFFFF',
     paddingHorizontal: 16,
+    position: 'relative',
   },
   header: {
     fontSize: 24,
@@ -235,7 +236,11 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   groupList: {
-    paddingBottom: 16,
+    flex: 1,
+    marginBottom: 120, // Space for create group button
+  },
+  groupListContent: {
+    paddingBottom: 20,
   },
   groupCard: {
     flexDirection: 'row',
@@ -273,16 +278,14 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   createGroupButton: {
-    backgroundColor: '#3E87FE',
-    borderRadius: 15,
-    paddingVertical: 80,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginVertical: 16,
     position: 'absolute',
-    bottom: 0,
+    bottom: 20,
     left: 16,
     right: 16,
+    backgroundColor: '#3E87FE',
+    borderRadius: 15,
+    paddingVertical: 20,
+    alignItems: 'center',
   },
   createGroupButtonText: {
     fontSize: 22,
