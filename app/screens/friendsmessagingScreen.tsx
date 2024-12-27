@@ -74,8 +74,17 @@ const FriendMessagingScreen: React.FC<Props> = ({ route, navigation }) => {
     }
   };
 
+  const POLLING_INTERVAL = 3000; // 3 seconds
+
   React.useEffect(() => {
-    fetchMessages();
+    fetchMessages(); // Initial fetch
+    
+    const intervalId = setInterval(() => {
+      fetchMessages();
+    }, POLLING_INTERVAL);
+
+    // Cleanup on unmount
+    return () => clearInterval(intervalId);
   }, [friendId]);
 
   const sendMessage = async () => {
