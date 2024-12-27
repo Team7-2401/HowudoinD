@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, FlatList, TextInput } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, TextInput, Alert, Modal } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import { getAuthToken } from '../config/tokenStorage';
+import { getAuthToken, getUserEmail } from '../config/tokenStorage';
 import { SERVER_URL } from '../config/constants';
 
 type NavigationProp = NativeStackNavigationProp<{
@@ -24,6 +24,9 @@ const GroupCreationScreen: React.FC = () => {
   const [friends, setFriends] = useState<Friend[]>([]);
   const [addedMembers, setAddedMembers] = useState<Friend[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [groupIdInput, setGroupIdInput] = useState('');
+  const [selectedFriend, setSelectedFriend] = useState<Friend | null>(null);
 
   const fetchFriends = async () => {
     try {
@@ -69,31 +72,111 @@ const GroupCreationScreen: React.FC = () => {
     fetchFriends();
   }, []);
 
-  const renderFriendItem = ({ item }: { item: Friend }) => {
-    const isAdded = addedMembers.some(member => member.id === item.id);
+  const handleCreateGroup = async () => {
+    try {
+      const token = await getAuthToken();
+      const userEmail = getUserEmail();
 
-    return (
-      <View style={styles.friendCard}>
-        <Text style={styles.friendEmail}>{item.email}</Text>
-        <TouchableOpacity 
-          style={[styles.addButton, isAdded && styles.addedButton]}
-          onPress={() => {
-            if (isAdded) {
-              setAddedMembers(addedMembers.filter(member => member.id !== item.id));
-            } else {
-              setAddedMembers([...addedMembers, item]);
-            }
-          }}
-        >
-          <Ionicons 
-            name={isAdded ? "checkmark" : "add"} 
-            size={24} 
-            color={isAdded ? "#FFFFFF" : "#3E87FE"} 
-          />
-        </TouchableOpacity>
-      </View>
-    );
+      if (!token || !userEmail) {
+        Alert.alert('Error', 'Not authenticated');
+        return;
+      }
+
+      const response = await fetch(`${SERVER_URL}/groups/create`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          createdby: { email: userEmail },
+          groupname: groupName,
+          about: groupDescription
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create group');
+      }
+
+      const data = await response.text();
+      Alert.alert(
+        'Success', 
+        `Group created successfully!
+         Group ID: ${data}`,
+        [
+          {
+            text: 'OK',
+            onPress: () => navigation.goBack()
+          }
+        ]
+      );
+    } catch (error) {
+      console.error('Error creating group:', error);
+      Alert.alert('Error', 'Failed to create group');
+    }
   };
+
+  const handleAddToGroup = async () => {
+    try {
+      const token = await getAuthToken();
+      if (!token || !selectedFriend) {
+        Alert.alert('Error', 'Invalid request data');
+        return;
+      }
+
+      const response = await fetch(`${SERVER_URL}/groups/${groupIdInput}/add-member`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          email: selectedFriend.email
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to add member to group');
+      }
+
+      const responseText = await response.text();
+      console.log('API Response:', responseText);
+
+      if (responseText === '1') {
+        Alert.alert('Error', 'Group not found');
+        
+      } else if (responseText === '2') {
+        Alert.alert('Error', 'You are not in the group, therefore cannot add members');
+      } else if (responseText === '3') {
+        Alert.alert('Error', 'User not found');
+      } else {
+        Alert.alert('Success', 'Member added to group successfully!');
+      }
+
+      setModalVisible(false);
+      setGroupIdInput('');
+      setSelectedFriend(null);
+    } catch (error) {
+      console.error('Error adding member to group:', error);
+      Alert.alert('Error', 'Failed to add member to group');
+    }
+  };
+
+  const renderFriendItem = ({ item }: { item: Friend }) => (
+    <View style={styles.friendCard}>
+      <Text style={styles.friendEmail}>{item.email}</Text>
+      <TouchableOpacity 
+        style={styles.addButton}
+        onPress={() => {
+          setSelectedFriend(item);
+          setModalVisible(true);
+        }}
+      >
+        <Ionicons name="add" size={24} color="#000000" />
+      </TouchableOpacity>
+    </View>
+  );
 
   return (
     <View style={styles.container}>
@@ -140,13 +223,44 @@ const GroupCreationScreen: React.FC = () => {
       />
       <TouchableOpacity 
         style={styles.createButton}
-        onPress={() => {
-          // Handle group creation
-          navigation.goBack();
-        }}
+        onPress={handleCreateGroup}
       >
         <Text style={styles.createButtonText}>Create Group</Text>
       </TouchableOpacity>
+
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Enter Group ID</Text>
+            <TextInput
+              style={styles.modalInput}
+              value={groupIdInput}
+              onChangeText={setGroupIdInput}
+              placeholder="Group ID"
+              keyboardType="numeric"
+            />
+            <View style={styles.modalButtons}>
+              <TouchableOpacity 
+                style={styles.modalButton}
+                onPress={() => setModalVisible(false)}
+              >
+                <Text style={styles.modalButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.modalButton, styles.modalButtonPrimary]}
+                onPress={handleAddToGroup}
+              >
+                <Text style={[styles.modalButtonText, styles.modalButtonTextPrimary]}>Add</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -249,6 +363,51 @@ const styles = StyleSheet.create({
   },
   addedButton: {
     backgroundColor: '#000000',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    borderRadius: 8,
+    padding: 20,
+    width: '80%',
+    maxWidth: 300,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 16,
+  },
+  modalInput: {
+    borderWidth: 1,
+    borderColor: '#000000',
+    borderRadius: 4,
+    padding: 8,
+    marginBottom: 16,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+  },
+  modalButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginLeft: 8,
+  },
+  modalButtonPrimary: {
+    backgroundColor: '#000000',
+    borderRadius: 4,
+  },
+  modalButtonText: {
+    color: '#000000',
+    fontSize: 16,
+  },
+  modalButtonTextPrimary: {
+    color: '#FFFFFF',
   },
 });
 
