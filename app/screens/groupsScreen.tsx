@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, ImageBackground } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -25,6 +25,7 @@ const GroupScreen: React.FC = () => {
     { id: '5', name: 'Group 1' },
     { id: '6', name: 'Group 1' },
   ]);
+  const [searchGroup, setSearchGroup] = useState('');
 
   const renderGroupItem = ({ item }: { item: Group }) => (
     <View style={styles.groupCard}>
@@ -56,13 +57,35 @@ const GroupScreen: React.FC = () => {
     <View style={styles.container}>
       <Text style={styles.header}>Howudoin</Text>
       <View style={styles.headerLine} />
-      <Text style={styles.subHeader}>Groups List...</Text>
-      <FlatList
+      <Text style={styles.subHeader}>Find groups...</Text>
+      
+      <View style={styles.searchSection}>
+        <View style={styles.searchBox}>
+          <Ionicons name="search" size={20} style={styles.searchIcon} />
+          <TextInput 
+            style={styles.searchInput} 
+            placeholder="Search groups by id" 
+            placeholderTextColor="#9CA3AF"
+            value={searchGroup}
+            onChangeText={setSearchGroup}
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+        </View>
+        <TouchableOpacity 
+          style={styles.searchButton}
+          onPress={() => handleSearchGroup(searchGroup)}
+        >
+          <Text style={styles.buttonText}>Search Group</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* <FlatList
         data={groups}
         renderItem={renderGroupItem}
         keyExtractor={(item) => item.id}
         style={styles.groupList}
-      />
+      /> */}
       <TouchableOpacity 
         style={[styles.createGroupButton, styles.buttonShadow]}
         onPress={() => navigation.navigate('groupcreationScreen')}
@@ -98,11 +121,49 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   subHeader: {
-    fontSize: 24,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#000000',
-    marginTop: -10,
-    marginBottom: 16,
+    marginVertical: 3,
+  },
+  searchSection: {
+    alignItems: 'center',
+    marginVertical: 20,
+    width: '100%',
+  },
+  searchBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#3E87FE',
+    borderRadius: 8,
+    padding: 8,
+    width: '90%',
+    marginBottom: 10,
+  },
+  searchIcon: {
+    marginRight: 8,
+    color: '#3E87FE',
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    color: '#000000',
+    padding: 8,
+  },
+  searchButton: {
+    backgroundColor: '#3E87FE',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    width: '90%',
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  buttonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   groupList: {
     paddingBottom: 16,
@@ -141,29 +202,20 @@ const styles = StyleSheet.create({
   },
   createGroupButton: {
     backgroundColor: '#3E87FE',
-    paddingVertical: 100,
-    paddingHorizontal: 30,
-    borderRadius: 25,
-    marginTop: 20,
-    marginBottom: 40,
+    borderRadius: 15,
+    paddingVertical: 80,
     alignItems: 'center',
-    position: 'relative',
-  },
-  buttonShadow: {
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 4.65,
-    elevation: 8,
+    justifyContent: 'center',
+    marginVertical: 16,
+    position: 'absolute',
+    bottom: 0,
+    left: 16,
+    right: 16,
   },
   createGroupButtonText: {
-    color: '#FFFFFF',
-    fontSize: 28,
+    fontSize: 22,
     fontWeight: 'bold',
-    letterSpacing: 0.5,
+    color: '#FFFFFF',
   },
   iconContainer: {
     position: 'absolute',
@@ -174,8 +226,8 @@ const styles = StyleSheet.create({
   },
   plusIconWrapper: {
     position: 'absolute',
-    right: -12,
-    bottom: -12,
+    right: -14,
+    bottom: -16,
   },
   createGroupBackground: {
     width: '100%',
@@ -196,5 +248,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#3E87FE',
   },
+  arrowContainer: {
+    position: 'absolute',
+    bottom: 16,
+    right: 16,
+  },
+  arrowSvg: {
+    width: 24,
+    height: 24,
+  }
 });
 export default GroupScreen;
