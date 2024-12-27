@@ -1,11 +1,14 @@
 import React from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, FlatList } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, FlatList, Alert } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
+import { getAuthToken, getUserEmail } from '../config/tokenStorage';
+import { SERVER_URL } from '../config/constants';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
 type RootStackParamList = {
   groupMessagingScreen: {
+    groupId: string;
     groupName: string;
   };
 };
@@ -27,27 +30,87 @@ interface Message {
 }
 
 const GroupMessagingScreen: React.FC<Props> = ({ route, navigation }) => {
-  const { groupName } = route.params;
+  const { groupId, groupName } = route.params;
   const [message, setMessage] = React.useState('');
-  const [messages, setMessages] = React.useState<Message[]>([
-    { id: '1', text: 'Vestibulum accumsan', timestamp: new Date(), isSent: false, senderName: 'Carlos Ahmad' },
-    { id: '2', text: 'In sagittis sem augue, vitae mollis', timestamp: new Date(), isSent: true, senderName: 'You' },
-    { id: '3', text: 'Aliquam volutpat dictum', timestamp: new Date(), isSent: false, senderName: 'Ali Ishtay Ahmad' },
-  ]);
+  const [messages, setMessages] = React.useState<Message[]>([]);
 
-  const handleSend = () => {
-    if (message.trim()) {
-      const newMessage: Message = {
-        id: Date.now().toString(),
-        text: message.trim(),
-        timestamp: new Date(),
-        isSent: true,
-        senderName: 'You',
-      };
-      setMessages((prevMessages) => [...prevMessages, newMessage]);
-      setMessage('');
+  const fetchMessages = async () => {
+    try {
+      const token = await getAuthToken();
+      if (!token) {
+        Alert.alert('Error', 'Not authenticated');
+        return;
+      }
+
+      const response = await fetch(`${SERVER_URL}/groups/${groupId}/messages`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch messages');
+      }
+
+      const data = await response.json();
+      console.log('Messages Response:', data);
+      
+      const transformedMessages = data.map((msg: any, index: number) => ({
+        id: index.toString(),
+        text: msg.content || '',
+        timestamp: new Date(msg.timestamp || Date.now()),
+        isSent: msg.sender?.email === getUserEmail(),
+        senderName: msg.sender?.email || 'Unknown'
+      }));
+
+      setMessages(transformedMessages);
+    } catch (error) {
+      console.error('Error fetching messages:', error);
+      Alert.alert('Error', 'Failed to fetch messages');
     }
   };
+
+  const sendMessage = async () => {
+    try {
+      const token = await getAuthToken();
+      if (!token || !message.trim()) {
+        Alert.alert('Error', 'Cannot send empty message');
+        return;
+      }
+
+      const response = await fetch(`${SERVER_URL}/groups/${groupId}/send`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          content: message
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to send message');
+      }
+
+      const responseText = await response.text();
+      if (responseText !== '0') {
+        throw new Error('Failed to send message');
+      }
+
+      setMessage('');
+      await fetchMessages();
+    } catch (error) {
+      console.error('Error sending message:', error);
+      Alert.alert('Error', 'Failed to send message');
+    }
+  };
+
+  React.useEffect(() => {
+    fetchMessages();
+  }, [groupId]);
 
   const renderMessage = ({ item }: { item: Message }) => (
     <View
@@ -115,7 +178,7 @@ const GroupMessagingScreen: React.FC<Props> = ({ route, navigation }) => {
           onChangeText={setMessage}
           multiline
         />
-        <TouchableOpacity style={styles.sendButton} onPress={handleSend}>
+        <TouchableOpacity style={styles.sendButton} onPress={sendMessage}>
           <Ionicons name="send" size={24} color="#FFFFFF" />
         </TouchableOpacity>
       </View>
